@@ -4,12 +4,17 @@ use uuid::Uuid;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// Represents a physical location, ranging from a city to a specific building.
+///
+/// locations provide the spatial context for Figures and Events.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Geo {
     pub id: Uuid,
     pub name: String,
+    /// The broader region or political entity this location belongs to (e.g., "Revachol West").
     pub region: Option<RichContent>,
     pub description: Option<RichContent>,
+    /// Alternative names or historical names.
     pub aliases: Vec<String>,
     pub relations: Vec<Relation>,
     pub created_at: chrono::DateTime<chrono::Utc>,

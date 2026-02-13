@@ -6,13 +6,29 @@ use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
 use serde::Deserialize;
 
+/// DTO for creating a new Location.
 #[derive(Deserialize)]
 pub struct CreateGeoRequest {
-    name: String,
-    region: Option<String>,
-    description: Option<String>,
+    pub name: String,
+    pub region: Option<String>,
+    pub description: Option<String>,
 }
 
+/// Retrieves all entities with type `Geo`.
+#[tauri::command]
+pub async fn get_all_geos(state: State<'_, EncyclopediaDb>) -> Result<Vec<Geo>, String> {
+    let entities = state.list_entities(Some(EntityType::Geo))
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let items: Result<Vec<Geo>, String> = entities.into_iter()
+        .map(|(_id, _name, data)| serde_json::from_str(&data).map_err(|e| e.to_string()))
+        .collect();
+
+    items
+}
+
+/// Creates a new Location and persists it.
 #[tauri::command]
 pub async fn create_geo(state: State<'_, EncyclopediaDb>, request: CreateGeoRequest) -> Result<String, String> {
     let id = Uuid::new_v4();

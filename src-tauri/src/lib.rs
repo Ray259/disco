@@ -29,11 +29,17 @@ pub fn run() {
             commands::figure::get_all_figures,
             commands::figure::get_figure,
             commands::figure::create_figure,
+            commands::institution::get_all_institutions,
             commands::institution::create_institution,
+            commands::event::get_all_events,
             commands::event::create_event,
+            commands::geo::get_all_geos,
             commands::geo::create_geo,
+            commands::work::get_all_works,
             commands::work::create_work,
-            commands::school::create_school_of_thought
+            commands::school::get_all_schools_of_thought,
+            commands::school::create_school_of_thought,
+            commands::search::search_entities
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

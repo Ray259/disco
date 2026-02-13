@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createGeo } from "../../api";
+import { createGeo, RelationDto } from "../../api";
 
 interface GeoFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  extraRelations: RelationDto[];
 }
 
-export function GeoForm({ onSuccess, onCancel }: GeoFormProps) {
+export function GeoForm({ onSuccess, onCancel, extraRelations }: GeoFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +26,8 @@ export function GeoForm({ onSuccess, onCancel }: GeoFormProps) {
       await createGeo({
         name,
         region: region || undefined,
-        description: description || undefined
+        description: description || undefined,
+        relations: extraRelations,
       });
 
       setLoading(false);

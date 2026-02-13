@@ -46,6 +46,11 @@ export async function getFigure(id: string): Promise<Figure | null> {
   return await invoke("get_figure", { id });
 }
 
+export interface RelationDto {
+  target_id: string; // Uuid
+  relation_type: string; // "FOUNDER_OF", etc.
+}
+
 export interface CreateFigureRequest {
   name: string;
   role: string;
@@ -53,6 +58,7 @@ export interface CreateFigureRequest {
   start_year: string;
   end_year: string;
   quote?: string;
+  relations?: RelationDto[];
 }
 
 export async function createFigure(request: CreateFigureRequest): Promise<string> {
@@ -64,6 +70,7 @@ export interface CreateInstitutionRequest {
   founded_start?: string;
   founded_end?: string;
   description?: string;
+  relations?: RelationDto[];
 }
 
 export async function createInstitution(request: CreateInstitutionRequest): Promise<string> {
@@ -75,6 +82,7 @@ export interface CreateEventRequest {
   start_date: string;
   end_date: string;
   description?: string;
+  relations?: RelationDto[];
 }
 
 export async function createEvent(request: CreateEventRequest): Promise<string> {
@@ -85,6 +93,7 @@ export interface CreateGeoRequest {
   name: string;
   region?: string;
   description?: string;
+  relations?: RelationDto[];
 }
 
 export async function createGeo(request: CreateGeoRequest): Promise<string> {
@@ -94,6 +103,7 @@ export async function createGeo(request: CreateGeoRequest): Promise<string> {
 export interface CreateWorkRequest {
   title: string;
   summary?: string;
+  relations?: RelationDto[];
 }
 
 export async function createWork(request: CreateWorkRequest): Promise<string> {
@@ -103,8 +113,74 @@ export async function createWork(request: CreateWorkRequest): Promise<string> {
 export interface CreateSchoolOfThoughtRequest {
   name: string;
   description?: string;
+  relations?: RelationDto[];
 }
 
 export async function createSchoolOfThought(request: CreateSchoolOfThoughtRequest): Promise<string> {
   return await invoke("create_school_of_thought", { request });
+}
+
+export interface SearchResult {
+  id: string;
+  entity_type: string;
+  name: string;
+  description?: string;
+}
+
+export async function searchEntities(query: string): Promise<SearchResult[]> {
+  return await invoke("search_entities", { query });
+}
+
+export interface Institution {
+  id: string;
+  name: string;
+  description?: RichContent;
+  founded?: DateRange;
+  // ...
+}
+
+export async function getAllInstitutions(): Promise<Institution[]> {
+  return await invoke("get_all_institutions");
+}
+
+export interface Event {
+  id: string;
+  name: string;
+  description?: RichContent;
+  date_range: DateRange;
+}
+
+export async function getAllEvents(): Promise<Event[]> {
+  return await invoke("get_all_events");
+}
+
+export interface Geo {
+  id: string;
+  name: string;
+  region?: RichContent;
+  description?: RichContent;
+}
+
+export async function getAllGeos(): Promise<Geo[]> {
+  return await invoke("get_all_geos");
+}
+
+export interface Work {
+  id: string;
+  title: string;
+  summary?: RichContent;
+}
+
+export async function getAllWorks(): Promise<Work[]> {
+  return await invoke("get_all_works");
+}
+
+export interface SchoolOfThought {
+  id: string;
+  name: string;
+  description?: RichContent;
+}
+
+export async function getAllSchoolsOfThought(): Promise<SchoolOfThought[]> {
+  return await invoke("get_all_schools_of_thought");
 }

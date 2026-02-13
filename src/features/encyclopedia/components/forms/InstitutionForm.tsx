@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createInstitution } from "../../api";
+import { createInstitution, RelationDto } from "../../api";
 
 interface InstitutionFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  extraRelations: RelationDto[];
 }
 
-export function InstitutionForm({ onSuccess, onCancel }: InstitutionFormProps) {
+export function InstitutionForm({ onSuccess, onCancel, extraRelations }: InstitutionFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export function InstitutionForm({ onSuccess, onCancel }: InstitutionFormProps) {
         founded_start: startYear || undefined,
         founded_end: endYear || undefined,
         description: description || undefined,
+        relations: extraRelations,
       });
 
       setLoading(false);

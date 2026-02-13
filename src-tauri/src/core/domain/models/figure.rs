@@ -27,45 +27,73 @@ impl MajorContribution {
     }
 }
 
+/// Represents a significant individual in the encyclopedia.
+///
+/// Figures are the central nodes of the graph, connecting to Institutions, Events, Works,
+/// and other Figures. The model captures not just biographical data but "role-playing"
+/// attributes like `Zeitgeist` (their historical spirit), `Axiom` (core belief), and
+/// `Critical Flaw`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Figure {
     pub id: Uuid,
 
     // Profile & Metadata
+    /// The display name of the figure.
     pub name: String,
+    /// The birth and death dates (or active period).
     pub life: DateRange,
+    /// A rich text description of their primary historical function (e.g., "Revolutionary", "Physicist").
     pub primary_role: RichContent,
+    /// Where they were primarily based or born.
     pub primary_location: RichContent,
+    /// A short, defining quote that encapsulates their character.
     pub defining_quote: Option<RichContent>,
 
     // Zeitgeist
+    /// The "Spirit of the Age" they represent.
     pub zeitgeist: Option<Zeitgeist>,
 
     // Core Ideology
+    /// The fundamental truth or rule they lived by.
     pub axiom: Option<RichContent>,
+    /// Specific vocabulary or terms they coined or popularized.
     pub key_terminology: HashMap<String, RichContent>,
+    /// A summary of their main logical or rhetorical progression.
     pub argument_flow: Option<RichContent>,
 
     // Institutional Power Base
+    /// The main organization they are associated with.
     pub primary_institution: Option<EntityRef>,
+    /// How they sustained their work (e.g., "Royal Patronage", "Crowdfunding").
     pub funding_model: Option<RichContent>,
+    /// What they produced within that institution.
     pub institutional_product: Option<RichContent>,
+    /// Who took over after them.
     pub succession_plan: Option<RichContent>,
 
     // Timeline
+    /// Key moments or outputs in their life.
     pub major_contributions: Vec<MajorContribution>,
 
     // Intellectual Lineage
+    /// Who influenced them.
     pub predecessors: Vec<EntityRef>,
+    /// Who they argued with or competed against.
     pub contemporary_rivals: Vec<EntityRef>,
+    /// Who carried on their work.
     pub successors: Vec<EntityRef>,
 
     // Legacy
+    /// Immediate impact.
     pub short_term_success: Option<RichContent>,
+    /// How they are viewed today.
     pub modern_relevance: Option<RichContent>,
+    /// The failing that eventually undid them or limited their scope.
     pub critical_flaw: Option<RichContent>,
+    /// Their own final view on their life's work.
     pub personal_synthesis: Option<RichContent>,
 
+    /// Generic graph edges to other entities.
     pub relations: Vec<Relation>,
 
     pub created_at: chrono::DateTime<chrono::Utc>,

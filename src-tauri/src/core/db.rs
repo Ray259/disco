@@ -3,12 +3,27 @@ use std::path::Path;
 use uuid::Uuid;
 use crate::core::domain::values::entity_ref::EntityType;
 
+/// The primary database access layer for the Encyclopedia application.
+///
+/// This struct wraps a `sqlx::Pool<Sqlite>` and provides strongly-typed methods
+/// for interacting with the `entities` and `relations` tables. It handles:
+/// - Schema initialization
+/// - Entity persistence (as JSON blobs)
+/// - Relation graph management
+/// - Text-based search
 #[derive(Clone)]
 pub struct EncyclopediaDb {
     pub pool: Pool<Sqlite>,
 }
 
 impl EncyclopediaDb {
+    /// Initializes the database connection pool and ensures the schema exists.
+    ///
+    /// # Arguments
+    /// * `url` - The database connection string (e.g., `sqlite://encyclopedia.db`).
+    ///
+    /// # Returns
+    /// * `Result<Self, sqlx::Error>` - The initialized database instance or an error.
     pub async fn init(url: &str) -> Result<Self, sqlx::Error> {
         // Ensure the file exists if using sqlite
         // sqlx requires sqlite:// protocol
@@ -22,6 +37,14 @@ impl EncyclopediaDb {
         Ok(db)
     }
 
+    /// Creates the `entities` and `relations` tables if they do not exist.
+    ///
+    /// The `entities` table stores the core domain objects as JSON blobs to allow
+    /// flexible schema evolution while maintaining a fixed relational structure for
+    /// basic metadata (ID, Type, Name).
+    ///
+    /// The `relations` table implements a graph structure allowing directed edges
+    /// between any two entities.
     async fn init_schema(&self) -> Result<(), sqlx::Error> {
         sqlx::query(
             "
@@ -57,6 +80,14 @@ impl EncyclopediaDb {
     }
 
     // Entity CRUD
+
+    /// Inserts a new entity into the database.
+    ///
+    /// # Arguments
+    /// * `id` - The unique UUID of the entity.
+    /// * `entity_type` - The domain type (Figure, Institution, etc.).
+    /// * `name` - The primary name of the entity (indexed for search).
+    /// * `data` - The serialized JSON representation of the full domain object.
     pub async fn insert_entity(&self, id: Uuid, entity_type: EntityType, name: &str, data: &str) -> Result<(), sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
@@ -140,7 +171,34 @@ impl EncyclopediaDb {
         Ok(entries)
     }
 
+    /// Performs a simple pattern matching search on entity names.
+    ///
+    /// Uses SQL `LIKE %query%` for partial matching. 
+    /// Restricts results to 20 items for performance.
+    pub async fn search_entities(&self, query: &str) -> Result<Vec<(Uuid, String, String, String)>, sqlx::Error> {
+        let pattern = format!("%{}%", query);
+        let rows: Vec<(String, String, String, String)> = sqlx::query_as(
+            "SELECT id, entity_type, name, data FROM entities WHERE name LIKE $1 ORDER BY name LIMIT 20"
+        )
+        .bind(pattern)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut entries = Vec::new();
+        for (id_str, entity_type, name, data) in rows {
+            if let Ok(id) = Uuid::parse_str(&id_str) {
+                entries.push((id, entity_type, name, data));
+            }
+        }
+        Ok(entries)
+    }
+
     // Relation CRUD
+
+    /// Creates a directed relationship between two entities.
+    ///
+    /// This is a lightweight edge in the graph. The `relation_type` defines the semantic
+    /// meaning of the link (e.g., "FOUNDER_OF", "BORN_IN").
     pub async fn insert_relation(&self, from_id: Uuid, to_id: Uuid, relation_type: &str) -> Result<(), sqlx::Error> {
         sqlx::query(
             "INSERT INTO relations (from_id, to_id, relation_type) VALUES ($1, $2, $3)"

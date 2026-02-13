@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createEvent } from "../../api";
+import { createEvent, RelationDto } from "../../api";
 
 interface EventFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  extraRelations: RelationDto[];
 }
 
-export function EventForm({ onSuccess, onCancel }: EventFormProps) {
+export function EventForm({ onSuccess, onCancel, extraRelations }: EventFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +29,8 @@ export function EventForm({ onSuccess, onCancel }: EventFormProps) {
         name,
         start_date: startYear,
         end_date: endYear,
-        description: description || undefined
+        description: description || undefined,
+        relations: extraRelations,
       });
 
       setLoading(false);

@@ -5,16 +5,19 @@ import { EventForm } from "./forms/EventForm";
 import { GeoForm } from "./forms/GeoForm";
 import { WorkForm } from "./forms/WorkForm";
 import { SchoolForm } from "./forms/SchoolForm";
+import { RelationManager, PendingRelation } from "./RelationManager";
 
 interface EntityCreateProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialType?: EntityType;
 }
 
-type EntityType = "Figure" | "Institution" | "Event" | "Geo" | "Work" | "School";
+export type EntityType = "Figure" | "Institution" | "Event" | "Geo" | "Work" | "School";
 
-export function EntityCreate({ onSuccess, onCancel }: EntityCreateProps) {
-  const [type, setType] = useState<EntityType>("Figure");
+export function EntityCreate({ onSuccess, onCancel, initialType }: EntityCreateProps) {
+  const [type, setType] = useState<EntityType>(initialType || "Figure");
+  const [relations, setRelations] = useState<PendingRelation[]>([]);
 
   const getTypeColor = (t: EntityType) => {
     switch (t) {
@@ -30,14 +33,31 @@ export function EntityCreate({ onSuccess, onCancel }: EntityCreateProps) {
 
   const currentColor = getTypeColor(type);
 
+  // Helper to transform UI relations to API relations
+  const getApiRelations = () => {
+    return relations.map(r => ({
+      target_id: r.targetId,
+      relation_type: r.role || "RELATED_TO"
+    }));
+  };
+
   const renderForm = () => {
+    const commonProps = {
+      onSuccess: () => {
+        setRelations([]); // Clear relations on success
+        onSuccess();
+      },
+      onCancel,
+      extraRelations: getApiRelations()
+    };
+
     switch (type) {
-      case "Figure": return <FigureForm onSuccess={onSuccess} onCancel={onCancel} />;
-      case "Institution": return <InstitutionForm onSuccess={onSuccess} onCancel={onCancel} />;
-      case "Event": return <EventForm onSuccess={onSuccess} onCancel={onCancel} />;
-      case "Geo": return <GeoForm onSuccess={onSuccess} onCancel={onCancel} />;
-      case "Work": return <WorkForm onSuccess={onSuccess} onCancel={onCancel} />;
-      case "School": return <SchoolForm onSuccess={onSuccess} onCancel={onCancel} />;
+      case "Figure": return <FigureForm {...commonProps} />;
+      case "Institution": return <InstitutionForm {...commonProps} />;
+      case "Event": return <EventForm {...commonProps} />;
+      case "Geo": return <GeoForm {...commonProps} />;
+      case "Work": return <WorkForm {...commonProps} />;
+      case "School": return <SchoolForm {...commonProps} />;
       default: return null;
     }
   };
@@ -74,6 +94,11 @@ export function EntityCreate({ onSuccess, onCancel }: EntityCreateProps) {
         </div>
 
         {renderForm()}
+        
+        {/* Relations Manager is shared across all types */}
+        <div className="mt-8 mb-20">
+          <RelationManager relations={relations} onChange={setRelations} />
+        </div>
       </div>
     </div>
   );

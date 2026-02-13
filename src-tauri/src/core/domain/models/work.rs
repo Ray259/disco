@@ -7,13 +7,18 @@ use crate::core::domain::values::entity_ref::EntityRef;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// Represents an intellectual or artistic output (book, theory, painting).
+///
+/// Works are the primary vehicle for transmitting ideas between Figures.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Work {
     pub id: Uuid,
     pub title: String,
+    /// The creators of the work.
     pub authors: Vec<EntityRef>,
     pub publication_date: Option<DateRange>,
     pub summary: Option<RichContent>,
+    /// The core concepts introduced or discussed in the work.
     pub key_ideas: Vec<RichContent>,
     pub relations: Vec<Relation>,
     pub created_at: chrono::DateTime<chrono::Utc>,

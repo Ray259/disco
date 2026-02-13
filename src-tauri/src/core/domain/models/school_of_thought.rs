@@ -3,6 +3,10 @@ use uuid::Uuid;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// Represents a broad ideological framework or movement (e.g., "Moralism", "Communism").
+///
+/// Schools of Thought group Figures and Works under a shared intellectual umbrella.
+/// They differ from Institutions in that they are often decentralized and abstract.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SchoolOfThought {
     pub id: Uuid,
@@ -10,8 +14,7 @@ pub struct SchoolOfThought {
     pub description: Option<RichContent>,
     pub relations: Vec<Relation>,
     
-    // Unique flavor: "Ideological Stats"
-    // To fit Disco Elysium, maybe "Political Alignment" or "Temperament"
+    /// Variations or branches within this school (e.g., "Mazovian Socio-Economics").
     pub sub_schools: Vec<String>,
     
     pub created_at: chrono::DateTime<chrono::Utc>,

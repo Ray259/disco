@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createSchoolOfThought } from "../../api";
+import { createSchoolOfThought, RelationDto } from "../../api";
 
 interface SchoolFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  extraRelations: RelationDto[];
 }
 
-export function SchoolForm({ onSuccess, onCancel }: SchoolFormProps) {
+export function SchoolForm({ onSuccess, onCancel, extraRelations }: SchoolFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +24,8 @@ export function SchoolForm({ onSuccess, onCancel }: SchoolFormProps) {
 
       await createSchoolOfThought({
         name,
-        description: description || undefined
+        description: description || undefined,
+        relations: extraRelations,
       });
 
       setLoading(false);

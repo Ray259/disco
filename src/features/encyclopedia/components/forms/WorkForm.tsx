@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createWork } from "../../api";
+import { createWork, RelationDto } from "../../api";
 
 interface WorkFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  extraRelations: RelationDto[];
 }
 
-export function WorkForm({ onSuccess, onCancel }: WorkFormProps) {
+export function WorkForm({ onSuccess, onCancel, extraRelations }: WorkFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,8 @@ export function WorkForm({ onSuccess, onCancel }: WorkFormProps) {
 
       await createWork({
         title: name,
-        summary: description || undefined
+        summary: description || undefined,
+        relations: extraRelations,
       });
 
       setLoading(false);

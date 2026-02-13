@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { createFigure } from "../../api";
+import { createFigure, RelationDto } from "../../api";
 
 interface FigureFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  extraRelations: RelationDto[];
 }
 
-export function FigureForm({ onSuccess, onCancel }: FigureFormProps) {
+export function FigureForm({ onSuccess, onCancel, extraRelations }: FigureFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export function FigureForm({ onSuccess, onCancel }: FigureFormProps) {
         start_year: startYear,
         end_year: endYear,
         quote: quote || undefined,
+        relations: extraRelations,
       });
 
       setLoading(false);
