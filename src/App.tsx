@@ -1,50 +1,49 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { FigureList } from "./features/encyclopedia/components/FigureList";
+import { FigureDetail } from "./features/encyclopedia/components/FigureDetail";
+import { EntityCreate } from "./features/encyclopedia/components/EntityCreate";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+type View = 
+  | { type: "list" }
+  | { type: "detail"; id: string }
+  | { type: "create" };
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+function App() {
+  const [view, setView] = useState<View>({ type: "list" });
+
+  const renderView = () => {
+    switch (view.type) {
+      case "list":
+        return (
+          <FigureList 
+            onSelect={(id) => setView({ type: "detail", id })} 
+            onCreate={() => setView({ type: "create" })}
+          />
+        );
+      case "detail":
+        return (
+          <FigureDetail 
+            id={view.id} 
+            onBack={() => setView({ type: "list" })} 
+          />
+        );
+      case "create":
+        return (
+          <EntityCreate 
+            onSuccess={() => setView({ type: "list" })} 
+            onCancel={() => setView({ type: "list" })} 
+          />
+        );
+    }
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+    <div className="min-h-screen bg-black text-white w-full">
+      <main className="w-full h-full">
+        {renderView()}
+      </main>
+    </div>
   );
 }
 

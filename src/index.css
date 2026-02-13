@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  /* Disco Elysium Palette */
+  --disco-bg: #121212; /* Deep dark background */
+  --disco-panel: #1e1e1e; /* Slightly lighter panel */
+  --disco-text-primary: #d4d4d8; /* Dirty White */
+  --disco-text-secondary: #a1a1aa; /* Muted Gray */
+  
+  --disco-accent-orange: #d94f04; /* Skill Check Orange (Intellect) */
+  --disco-accent-teal: #1f8b86; /* Psyche Teal */
+  --disco-accent-yellow: #dcb037; /* Motorics Yellow */
+  --disco-accent-purple: #9b2c48; /* Physique Purple */
+
+  /* Typography */
+  --font-header: Impact, "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-body: Georgia, "Times New Roman", Times, serif;
+  --font-mono: "Courier New", Courier, monospace;
+
+  font-family: var(--font-body);
+  line-height: 1.6;
+  color: var(--disco-text-primary);
+  background-color: var(--disco-bg);
+}
+
+/* Explicit reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-header);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: normal; /* Condensed fonts often don't need bold */
+}
+
+input, button, select, textarea {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--disco-accent-orange);
+}

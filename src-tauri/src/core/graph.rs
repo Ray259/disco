@@ -77,7 +77,7 @@ impl EncyclopediaGraph {
             .collect()
     }
 
-    // Extract all entity refs from the graph (for serialization)
+    // Extract all entity refs from the graph
     pub fn all_refs(&self) -> Vec<EntityRef> {
         self.graph.node_indices()
             .map(|idx| {
