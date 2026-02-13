@@ -3,7 +3,9 @@ use uuid::Uuid;
 
 use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityRef;
+
 use crate::core::domain::values::rich_content::RichContent;
+use crate::core::domain::values::relation::Relation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Institution {
@@ -14,6 +16,7 @@ pub struct Institution {
     pub description: Option<RichContent>,
     pub founders: Vec<EntityRef>,
     pub products: Vec<RichContent>,
+    pub relations: Vec<Relation>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -29,6 +32,7 @@ impl Institution {
             description: None,
             founders: Vec::new(),
             products: Vec::new(),
+            relations: Vec::new(),
             created_at: now,
             updated_at: now,
         }

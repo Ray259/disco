@@ -99,3 +99,12 @@ export interface CreateWorkRequest {
 export async function createWork(request: CreateWorkRequest): Promise<string> {
   return await invoke("create_work", { request });
 }
+
+export interface CreateSchoolOfThoughtRequest {
+  name: string;
+  description?: string;
+}
+
+export async function createSchoolOfThought(request: CreateSchoolOfThoughtRequest): Promise<string> {
+  return await invoke("create_school_of_thought", { request });
+}

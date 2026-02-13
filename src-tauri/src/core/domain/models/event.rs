@@ -3,7 +3,9 @@ use uuid::Uuid;
 
 use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityRef;
+
 use crate::core::domain::values::rich_content::RichContent;
+use crate::core::domain::values::relation::Relation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
@@ -15,6 +17,7 @@ pub struct Event {
     pub participants: Vec<EntityRef>,
     pub causes: Vec<RichContent>,
     pub consequences: Vec<RichContent>,
+    pub relations: Vec<Relation>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -31,6 +34,7 @@ impl Event {
             participants: Vec::new(),
             causes: Vec::new(),
             consequences: Vec::new(),
+            relations: Vec::new(),
             created_at: now,
             updated_at: now,
         }

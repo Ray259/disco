@@ -6,6 +6,7 @@ use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityRef;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::zeitgeist::Zeitgeist;
+use crate::core::domain::values::relation::Relation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MajorContribution {
@@ -65,6 +66,8 @@ pub struct Figure {
     pub critical_flaw: Option<RichContent>,
     pub personal_synthesis: Option<RichContent>,
 
+    pub relations: Vec<Relation>,
+
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
@@ -95,6 +98,7 @@ impl Figure {
             modern_relevance: None,
             critical_flaw: None,
             personal_synthesis: None,
+            relations: Vec::new(),
             created_at: now,
             updated_at: now,
         }

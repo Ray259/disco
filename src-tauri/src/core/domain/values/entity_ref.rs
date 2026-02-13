@@ -8,6 +8,7 @@ pub enum EntityType {
     Event,
     Geo,
     Institution,
+    SchoolOfThought,
 }
 
 impl std::fmt::Display for EntityType {
@@ -18,6 +19,7 @@ impl std::fmt::Display for EntityType {
             EntityType::Event => write!(f, "Event"),
             EntityType::Geo => write!(f, "Geo"),
             EntityType::Institution => write!(f, "Institution"),
+            EntityType::SchoolOfThought => write!(f, "School of Thought"),
         }
     }
 }

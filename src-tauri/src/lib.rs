@@ -26,13 +26,14 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
-            commands::encyclopedia::get_all_figures,
-            commands::encyclopedia::get_figure,
-            commands::encyclopedia::create_figure,
-            commands::encyclopedia::create_institution,
-            commands::encyclopedia::create_event,
-            commands::encyclopedia::create_geo,
-            commands::encyclopedia::create_work
+            commands::figure::get_all_figures,
+            commands::figure::get_figure,
+            commands::figure::create_figure,
+            commands::institution::create_institution,
+            commands::event::create_event,
+            commands::geo::create_geo,
+            commands::work::create_work,
+            commands::school::create_school_of_thought
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

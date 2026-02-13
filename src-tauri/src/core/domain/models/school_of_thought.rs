@@ -1,40 +1,35 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Geo {
+pub struct SchoolOfThought {
     pub id: Uuid,
     pub name: String,
-    pub region: Option<RichContent>,
     pub description: Option<RichContent>,
-    pub aliases: Vec<String>,
     pub relations: Vec<Relation>,
+    
+    // Unique flavor: "Ideological Stats"
+    // To fit Disco Elysium, maybe "Political Alignment" or "Temperament"
+    pub sub_schools: Vec<String>,
+    
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-impl Geo {
+impl SchoolOfThought {
     pub fn new(id: Uuid, name: String) -> Self {
         let now = chrono::Utc::now();
         Self {
             id,
             name,
-            region: None,
             description: None,
-            aliases: Vec::new(),
             relations: Vec::new(),
+            sub_schools: Vec::new(),
             created_at: now,
             updated_at: now,
         }
-    }
-
-    pub fn with_region(mut self, region: RichContent) -> Self {
-        self.region = Some(region);
-        self.updated_at = chrono::Utc::now();
-        self
     }
 
     pub fn with_description(mut self, description: RichContent) -> Self {
