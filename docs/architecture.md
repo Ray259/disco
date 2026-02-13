@@ -27,3 +27,11 @@ resolution of commands follows the `invoke_handler!` macro in `lib.rs`.
 *   **Frontend**: Vite bundles React to `dist/`.
 *   **Backend**: Cargo compiles binary linking the webview and native Cocoa/GTK/Windows libs.
 *   **Final Binary**: Contains the frontend assets embedded as a resource.
+
+## Code Organization (Frontend)
+We follow a **Feature-Based** architecture (`src/features/encyclopedia`).
+*   **`api/`**: TypeScript definitions and `invoke` wrappers.
+*   **`components/`**: React components specific to the feature.
+    *   **`forms/`**: Entity creation forms.
+*   **`hooks/`**: Custom hooks logic (e.g. `useEncyclopediaNavigation`).
+*   **Shared**: Common UI elements (like `SharedFormComponents.tsx`) are kept within the feature if they are domain-specific, or in `src/components` if truly global.

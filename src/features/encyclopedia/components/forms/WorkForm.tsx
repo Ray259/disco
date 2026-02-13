@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createWork, RelationDto } from "../../api";
+import { FormLayout, FormInput, FormTextArea } from "./SharedFormComponents";
 
 interface WorkFormProps {
   onSuccess: () => void;
@@ -37,51 +38,39 @@ export function WorkForm({ onSuccess, onCancel, extraRelations }: WorkFormProps)
     }
   };
 
-  const currentColor = "#d4d4d8"; // Neutral
+  const currentColor = "#d4d4d8";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
-      {error && (
-        <div className="mb-8 p-4 bg-[#2a1a1a] border-l-4 border-red-800 text-red-400 font-[var(--font-mono)] text-xs">
-          [FAILURE] {error}
-        </div>
-      )}
+    <FormLayout 
+      onSubmit={handleSubmit} 
+      onCancel={onCancel} 
+      loading={loading} 
+      error={error} 
+      color={currentColor}
+    >
+      <FormInput 
+        label="1. Designation" 
+        value={name} 
+        onChange={(e) => setName(e.target.value)} 
+        placeholder="ENTER TITLE..." 
+        color={currentColor}
+      />
 
-      <div className="group">
-        <label className="block text-xs font-[var(--font-mono)] uppercase tracking-widest mb-2 transition-colors" style={{ color: currentColor }}>
-          1. Designation
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full bg-transparent border-b-2 border-[#333] py-2 text-3xl font-[var(--font-header)] text-white focus:outline-none transition-colors placeholder-[#333] uppercase"
-          style={{ borderColor: "#333" }} 
-          placeholder="ENTER TITLE..."
-        />
-      </div>
+      <FormTextArea 
+        label="2. Abstract (Summary)" 
+        value={description} 
+        onChange={(e) => setDescription(e.target.value)} 
+        placeholder="Details..."
+      />
 
-      <div className="group">
-        <label className="block text-xs font-[var(--font-mono)] text-[#666] uppercase tracking-widest mb-2">
-          2. Abstract (Summary)
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          className="w-full bg-[#181818] border border-[#333] p-4 text-lg font-[var(--font-body)] text-white focus:outline-none placeholder-[#444]"
-          style={{ borderColor: "#333" }}
-          placeholder="Details..."
-        />
-      </div>
-
+       {/* Custom block for single date to match aesthetic */}
       <div className="p-6 bg-[#151515] border border-[#222] relative overflow-hidden">
          <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[#444]" />
          <h3 className="text-xs font-[var(--font-mono)] text-[#666] uppercase mb-6 text-center tracking-widest">
            Publication Date
          </h3>
-         <div className="flex items-center gap-6">
-           <div className="flex-1">
+         <div className="flex justify-center">
+           <div className="w-1/2">
              <label className="block text-[10px] text-[#444] mb-1 font-[var(--font-mono)] text-center">
                PUBLISHED
              </label>
@@ -95,25 +84,6 @@ export function WorkForm({ onSuccess, onCancel, extraRelations }: WorkFormProps)
            </div>
          </div>
       </div>
-
-      <div className="flex justify-between items-center pt-8 border-t border-[#222]">
-         <button
-           type="button"
-           onClick={onCancel}
-           className="text-xs font-[var(--font-mono)] text-[#666] hover:text-white uppercase tracking-widest hover:underline"
-         >
-           [ Discard ]
-         </button>
-
-         <button
-           type="submit"
-           disabled={loading}
-           className="bg-[#d4d4d8] text-black px-8 py-3 font-[var(--font-header)] text-xl uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50"
-           style={{ backgroundColor: currentColor }}
-         >
-            {loading ? "PROCESSING..." : "INTERNALIZE"}
-         </button>
-      </div>
-    </form>
+    </FormLayout>
   );
 }

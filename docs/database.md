@@ -61,7 +61,9 @@ To find "All Students of Figure X":
 3.  **Result**: Returns List of UUIDs.
 4.  **Hydration**: Must run `SELECT * FROM entities WHERE id IN (...)` to get the actual student data.
 
-## 4. Known Limitations / Edge Cases
+## 4. Schema Evolution & Limitations
 *   **Refactoring Fields**: If you rename a field in `Figure` struct (e.g. `role` -> `job`), old JSON blobs in the DB will fail to deserialize.
     *   *Solution*: `serde(rename = "old_name")` or database migration script to rewrite JSON blobs.
-*   **Orphaned JSON**: The `entities` table structure effectively performs no validation on the JSON content. Malformed JSON (via manual edit) will cause `get_figure` to return `Err`.
+*   **Missing Fields (Frontend Handling)**:
+    *   The frontend `EntityRenderers` include defensive checks for optional fields (like `date_range`) to preventing crashing when displaying legacy data that might be missing these fields.
+*   **Orphaned JSON**: The `entities` table structure effectively performs no validation on the JSON content. Malformed JSON (via manual edit) will cause `get_figure`/`get_all_*` to return `Err`.

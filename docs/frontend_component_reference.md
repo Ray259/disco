@@ -7,26 +7,24 @@ This document details every React component, its props, state, and rendering log
 ## 1. Core Components
 
 ### `EntityCreate.tsx`
-**Role**: The Page Controller for the "/create" route.
-*   **State**:
-    *   `activeTab`: String enum ("Figure" | "Institution" | ...). Defaults to "Figure".
+**Role**: The Page Controller for the creation route.
+*   **Config**: Imports `ENTITY_CONFIG` to know which entities exist.
+*   **State**: `activeTab` (defaults to first key in config).
 *   **Logic**:
-    *   Renders a Tab Bar (Tailwind grid).
-    *   Based on `activeTab`, renders exactly one sub-form (e.g. `<FigureForm />`).
-    *   **Crucial**: Does not pass state down. Each form manages its own state. Unmounting a tab clears that form's input.
+    *   Renders a dynamically generated Tab Bar.
+    *   Renders the specific Form Component from config (e.g. `<FigureForm />`).
+    *   Passes `extraRelations` (mocked for now) to forms.
 
-### `FigureList.tsx`
-**Role**: The Landing Page / Index.
-*   **State**:
-    *   `figures`: `Figure[]`.
-    *   `loading`: Boolean.
-    *   `error`: String | null.
-*   **Effect**:
-    *   On Mount: Calls `api.getAllFigures()`.
-*   **Render**:
-    *   Maps over `figures`.
-    *   Renders a Card with `name`, `primary_role`, and `life`.
-    *   Clicking a card navigates to `/figure/:id`.
+### `GenericEntityList.tsx`
+**Role**: A reusable list view for ANY entity type.
+*   **Props**:
+    *   `title`: String.
+    *   `fetcher`: Async function returning `T[]`.
+    *   `renderItem`: Function returning ReactNode for a `T`.
+*   **Logic**:
+    *   Fetches data on mount using `fetcher`.
+    *   Renders each item using `renderItem`.
+    *   Handles Loading/Error states uniformly.
 
 ### `FigureDetail.tsx`
 **Role**: The View Page for a single figure.
@@ -48,31 +46,25 @@ This document details every React component, its props, state, and rendering log
 
 ## 2. Forms (`components/forms/*`)
 
-All forms follow the `onSubmit` pattern:
-1.  `e.preventDefault()`
-2.  Construct Request Object.
-3.  `await api.createX(req)`.
-4.  `navigate('/')` (or to detail view).
+All forms now use **`SharedFormComponents`** for layout and consistent styling.
 
-### `FigureForm.tsx`
-*   **Fields**: Name, Role, Location, Start Year, End Year, Quote (TextArea).
-*   **Validation**: HTML5 `required` on Name, Role, Location, Years.
+*   **`SharedFormComponents.tsx`**:
+    *   `FormLayout`: The common wrapper.
+    *   `FormInput`, `FormTextArea`: Styled inputs.
+    *   `TemporalCoordinates`: The "start-end" date block.
 
-### `InstitutionForm.tsx`
-*   **Fields**: Name, Founded Start (Opt), Founded End (Opt), Description (TextArea).
+### Specific Forms
+Each form (`FigureForm`, `InstitutionForm`, etc.) is now a thin wrapper that:
+1.  Defines local state for specific fields.
+2.  Calls the specific API creator (e.g. `createFigure`).
+3.   renders `<FormLayout>` containing `<FormInput>`s.
 
-### `EventForm.tsx`
-*   **Fields**: Name, Start Date (Date Picker), End Date (Date Picker), Description.
-*   **Note**: Uses `type="date"` input, unlike Figure which uses `type="number"` for years.
-
-### `GeoForm.tsx`
-*   **Fields**: Name, Region, Description.
-
-### `WorkForm.tsx`
-*   **Fields**: Title, Summary.
-
-### `SchoolForm.tsx`
-*   **Fields**: Name, Description.
+*   **`FigureForm`**: Adds `TemporalCoordinates` for life span.
+*   **`InstitutionForm`**: Adds `TemporalCoordinates` for founding dates.
+*   **`EventForm`**: Adds `TemporalCoordinates` for event duration.
+*   **`GeoForm`**: Standard fields.
+*   **`WorkForm`**: Uses a custom date input for Publication Date.
+*   **`SchoolForm`**: Standard fields.
 
 ---
 

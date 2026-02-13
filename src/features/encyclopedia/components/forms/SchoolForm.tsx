@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createSchoolOfThought, RelationDto } from "../../api";
+import { FormLayout, FormInput, FormTextArea } from "./SharedFormComponents";
 
 interface SchoolFormProps {
   onSuccess: () => void;
@@ -36,62 +37,30 @@ export function SchoolForm({ onSuccess, onCancel, extraRelations }: SchoolFormPr
     }
   };
 
-  const currentColor = "#ef4444"; // Red
+  const currentColor = "#ef4444";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
-      {error && (
-        <div className="mb-8 p-4 bg-[#2a1a1a] border-l-4 border-red-800 text-red-400 font-[var(--font-mono)] text-xs">
-          [FAILURE] {error}
-        </div>
-      )}
+    <FormLayout 
+      onSubmit={handleSubmit} 
+      onCancel={onCancel} 
+      loading={loading} 
+      error={error} 
+      color={currentColor}
+    >
+      <FormInput 
+        label="1. Designation" 
+        value={name} 
+        onChange={(e) => setName(e.target.value)} 
+        placeholder="ENTER IDEOLOGY..." 
+        color={currentColor}
+      />
 
-      <div className="group">
-        <label className="block text-xs font-[var(--font-mono)] uppercase tracking-widest mb-2 transition-colors" style={{ color: currentColor }}>
-          1. Designation
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full bg-transparent border-b-2 border-[#333] py-2 text-3xl font-[var(--font-header)] text-white focus:outline-none transition-colors placeholder-[#333] uppercase"
-          style={{ borderColor: "#333" }} 
-          placeholder="ENTER IDEOLOGY..."
-        />
-      </div>
-
-      <div className="group">
-        <label className="block text-xs font-[var(--font-mono)] text-[#666] uppercase tracking-widest mb-2">
-          Description / Manifest
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          className="w-full bg-[#181818] border border-[#333] p-4 text-lg font-[var(--font-body)] text-white focus:outline-none placeholder-[#444]"
-          style={{ borderColor: "#333" }}
-          placeholder="Details..."
-        />
-      </div>
-
-      <div className="flex justify-between items-center pt-8 border-t border-[#222]">
-         <button
-           type="button"
-           onClick={onCancel}
-           className="text-xs font-[var(--font-mono)] text-[#666] hover:text-white uppercase tracking-widest hover:underline"
-         >
-           [ Discard ]
-         </button>
-
-         <button
-           type="submit"
-           disabled={loading}
-           className="bg-[#d4d4d8] text-black px-8 py-3 font-[var(--font-header)] text-xl uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50"
-           style={{ backgroundColor: currentColor }}
-         >
-            {loading ? "PROCESSING..." : "INTERNALIZE"}
-         </button>
-      </div>
-    </form>
+      <FormTextArea 
+        label="Description / Manifest" 
+        value={description} 
+        onChange={(e) => setDescription(e.target.value)} 
+        placeholder="Details..."
+      />
+    </FormLayout>
   );
 }

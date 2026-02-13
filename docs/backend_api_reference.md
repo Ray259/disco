@@ -56,6 +56,10 @@ This document details every public command exposed to the frontend and the inter
     *   Dates are optional here. simpler parsing logic than Figure.
     *   Initializes empty vectors for `founders`, `products`, `relations`.
 
+### `get_all_institutions`
+*   **Signature**: `fn(state) -> Result<Vec<Institution>, String>`
+*   **Logic**: Fetches all entities where `entity_type = "Institution"`.
+
 ---
 
 ## 3. Event Commands (`commands/event.rs`)
@@ -72,6 +76,11 @@ This document details every public command exposed to the frontend and the inter
     ```
 *   **Logic**:
     *   Strict date parsing (`%Y-%m-%d`).
+    *   Converts dates to `DateRange`.
+
+### `get_all_events`
+*   **Signature**: `fn(state) -> Result<Vec<Event>, String>`
+*   **Logic**: Fetches all entities where `entity_type = "Event"`.
 
 ---
 
@@ -81,6 +90,10 @@ This document details every public command exposed to the frontend and the inter
 *   **Input**: `{ name, region?, description? }`
 *   **Logic**: Plain text fields converted to `RichContent`.
 
+### `get_all_geos`
+*   **Signature**: `fn(state) -> Result<Vec<Geo>, String>`
+*   **Logic**: Fetches all entities where `entity_type = "Geo"`.
+
 ---
 
 ## 5. Work Commands (`commands/work.rs`)
@@ -89,13 +102,23 @@ This document details every public command exposed to the frontend and the inter
 *   **Input**: `{ title, summary? }`
 *   **Logic**: `title` maps to `entities.name`.
 
+### `get_all_works`
+*   **Signature**: `fn(state) -> Result<Vec<Work>, String>`
+*   **Logic**: Fetches all entities where `entity_type = "Work"`.
+
 ---
 
 ## 6. School of Thought Commands (`commands/school.rs`)
 
 ### `create_school_of_thought`
 *   **Input**: `{ name, description? }`
-*   **Logic**: Simple wrapper.
+*   **Logic**:
+    *   Creates a new SchoolOfThought.
+    *   Initializes `sub_schools` as empty vector (future feature).
+
+### `get_all_schools_of_thought`
+*   **Signature**: `fn(state) -> Result<Vec<SchoolOfThought>, String>`
+*   **Logic**: Fetches all entities where `entity_type = "SchoolOfThought"`.
 
 ---
 
