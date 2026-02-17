@@ -1,20 +1,39 @@
-import { useState } from "react";
-import { createGeo, RelationDto } from "../../api";
+import { useState, useEffect } from "react";
+import { createGeo, updateGeo, RelationDto } from "../../api";
 import { FormLayout, FormInput, FormTextArea } from "./SharedFormComponents";
 
 interface GeoFormProps {
   onSuccess: () => void;
   onCancel: () => void;
   extraRelations: RelationDto[];
+  initialValues?: any;
+  editId?: string;
 }
 
-export function GeoForm({ onSuccess, onCancel, extraRelations }: GeoFormProps) {
+const getText = (content: any) => {
+    if (!content) return "";
+    if (typeof content === "string") return content;
+    if (content.segments && Array.isArray(content.segments)) {
+        return content.segments.map((s: any) => s.Text || "").join("");
+    }
+    return "";
+};
+
+export function GeoForm({ onSuccess, onCancel, extraRelations, initialValues, editId }: GeoFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [region, setRegion] = useState("");
   const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (initialValues) {
+        setName(initialValues.name || "");
+        setRegion(getText(initialValues.region));
+        setDescription(getText(initialValues.description));
+    }
+  }, [initialValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +43,18 @@ export function GeoForm({ onSuccess, onCancel, extraRelations }: GeoFormProps) {
     try {
       if (!name) throw new Error("Designation/Name is required.");
 
-      await createGeo({
+      const payload = {
         name,
         region: region || undefined,
         description: description || undefined,
         relations: extraRelations,
-      });
+      };
+
+      if (editId) {
+          await updateGeo(editId, payload);
+      } else {
+          await createGeo(payload);
+      }
 
       setLoading(false);
       onSuccess();
@@ -48,6 +73,7 @@ export function GeoForm({ onSuccess, onCancel, extraRelations }: GeoFormProps) {
       loading={loading} 
       error={error} 
       color={currentColor}
+      submitLabel={editId ? "Update Location" : "Create Location"}
     >
       <FormInput 
         label="1. Designation" 

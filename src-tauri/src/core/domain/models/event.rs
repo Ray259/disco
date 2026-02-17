@@ -67,3 +67,24 @@ impl Event {
         self
     }
 }
+
+use crate::core::domain::values::entity_ref::EntityType;
+use crate::core::domain::traits::DomainEntity;
+
+impl DomainEntity for Event {
+    fn id(&self) -> Uuid {
+        self.id
+    }
+
+    fn entity_type(&self) -> EntityType {
+        EntityType::Event
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) {
+        self.updated_at = date;
+    }
+}

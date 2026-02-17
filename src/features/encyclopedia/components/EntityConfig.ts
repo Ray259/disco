@@ -4,7 +4,13 @@ import {
     getAllEvents, 
     getAllGeos, 
     getAllWorks, 
-    getAllSchoolsOfThought 
+    getAllSchoolsOfThought,
+    getFigure,
+    getInstitution,
+    getEvent,
+    getGeo,
+    getWork,
+    getSchoolOfThought
 } from "../api";
 import { Renderers } from "./EntityRenderers";
 import { FigureForm } from "./forms/FigureForm";
@@ -18,6 +24,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
     figures: {
         title: "People",
         fetcher: getAllFigures,
+        getById: getFigure,
         renderer: Renderers.Figure,
         createType: "Figure",
         formComponent: FigureForm,
@@ -26,6 +33,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
     institutions: {
         title: "Institutions",
         fetcher: getAllInstitutions,
+        getById: getInstitution,
         renderer: Renderers.Institution,
         createType: "Institution",
         formComponent: InstitutionForm,
@@ -34,6 +42,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
     events: {
         title: "Historical Events",
         fetcher: getAllEvents,
+        getById: getEvent,
         renderer: Renderers.Event,
         createType: "Event",
         formComponent: EventForm,
@@ -42,6 +51,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
     geos: {
         title: "Geography",
         fetcher: getAllGeos,
+        getById: getGeo,
         renderer: Renderers.Geo,
         createType: "Geo",
         formComponent: GeoForm,
@@ -50,6 +60,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
     works: {
         title: "Bibliography",
         fetcher: getAllWorks,
+        getById: getWork,
         renderer: Renderers.Work,
         createType: "Work",
         formComponent: WorkForm,
@@ -58,6 +69,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
     schools: {
         title: "Schools of Thought",
         fetcher: getAllSchoolsOfThought,
+        getById: getSchoolOfThought,
         renderer: Renderers.School,
         createType: "School",
         formComponent: SchoolForm,

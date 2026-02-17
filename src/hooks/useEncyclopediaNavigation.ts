@@ -11,7 +11,8 @@ export type EntityType =
 export type View = 
   | { type: "list"; entityType: EntityType }
   | { type: "detail"; entityType: EntityType; id: string }
-  | { type: "create"; initialType?: string };
+  | { type: "create"; initialType?: string }
+  | { type: "edit"; entityType: EntityType; id: string };
 
 export function useEncyclopediaNavigation() {
   const [view, setView] = useState<View>({ type: "list", entityType: "figures" });
@@ -28,10 +29,15 @@ export function useEncyclopediaNavigation() {
     setView({ type: "create", initialType });
   };
 
+  const navigateToEdit = (entityType: EntityType, id: string) => {
+    setView({ type: "edit", entityType, id });
+  };
+
   return {
     view,
     navigateToList,
     navigateToDetail,
     navigateToCreate,
+    navigateToEdit
   };
 }

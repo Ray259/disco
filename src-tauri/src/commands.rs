@@ -5,6 +5,7 @@ pub mod geo;
 pub mod work;
 pub mod school;
 pub mod search;
+pub mod common;
 
 use serde::Deserialize;
 use uuid::Uuid;

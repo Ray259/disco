@@ -223,6 +223,16 @@ impl EncyclopediaDb {
         Ok(result.rows_affected())
     }
 
+    pub async fn clear_outgoing_relations(&self, from_id: Uuid) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query(
+            "DELETE FROM relations WHERE from_id = $1"
+        )
+        .bind(from_id.to_string())
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected())
+    }
+
     pub async fn get_relations_from(&self, from_id: Uuid) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
         let rows: Vec<(String, String)> = sqlx::query_as(
             "SELECT to_id, relation_type FROM relations WHERE from_id = $1"

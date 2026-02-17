@@ -143,6 +143,10 @@ export async function getAllInstitutions(): Promise<Institution[]> {
   return await invoke("get_all_institutions");
 }
 
+export async function getInstitution(id: string): Promise<Institution | null> {
+  return await invoke("get_institution", { id });
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -152,6 +156,10 @@ export interface Event {
 
 export async function getAllEvents(): Promise<Event[]> {
   return await invoke("get_all_events");
+}
+
+export async function getEvent(id: string): Promise<Event | null> {
+  return await invoke("get_event", { id });
 }
 
 export interface Geo {
@@ -165,6 +173,10 @@ export async function getAllGeos(): Promise<Geo[]> {
   return await invoke("get_all_geos");
 }
 
+export async function getGeo(id: string): Promise<Geo | null> {
+  return await invoke("get_geo", { id });
+}
+
 export interface Work {
   id: string;
   title: string;
@@ -175,6 +187,10 @@ export async function getAllWorks(): Promise<Work[]> {
   return await invoke("get_all_works");
 }
 
+export async function getWork(id: string): Promise<Work | null> {
+  return await invoke("get_work", { id });
+}
+
 export interface SchoolOfThought {
   id: string;
   name: string;
@@ -183,4 +199,48 @@ export interface SchoolOfThought {
 
 export async function getAllSchoolsOfThought(): Promise<SchoolOfThought[]> {
   return await invoke("get_all_schools_of_thought");
+}
+
+export async function getSchoolOfThought(id: string): Promise<SchoolOfThought | null> {
+  return await invoke("get_school_of_thought", { id });
+}
+
+// --- Generic ---
+
+export async function deleteEntity(id: string): Promise<string> {
+    console.log("API: deleteEntity called for", id);
+    try {
+        const res = await invoke("delete_entity", { id });
+        console.log("API: deleteEntity success", res);
+        return res as string;
+    } catch (e) {
+        console.error("API: deleteEntity failed", e);
+        throw e;
+    }
+}
+
+// --- Updates ---
+
+export async function updateFigure(id: string, request: CreateFigureRequest): Promise<string> {
+    return await invoke("update_figure", { id, request });
+}
+
+export async function updateInstitution(id: string, request: CreateInstitutionRequest): Promise<string> {
+    return await invoke("update_institution", { id, request });
+}
+
+export async function updateEvent(id: string, request: CreateEventRequest): Promise<string> {
+    return await invoke("update_event", { id, request });
+}
+
+export async function updateGeo(id: string, request: CreateGeoRequest): Promise<string> {
+    return await invoke("update_geo", { id, request });
+}
+
+export async function updateWork(id: string, request: CreateWorkRequest): Promise<string> {
+    return await invoke("update_work", { id, request });
+}
+
+export async function updateSchoolOfThought(id: string, request: CreateSchoolOfThoughtRequest): Promise<string> {
+    return await invoke("update_school_of_thought", { id, request });
 }

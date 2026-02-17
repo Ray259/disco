@@ -26,19 +26,26 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
+            commands::common::delete_entity,
             commands::figure::get_all_figures,
             commands::figure::get_figure,
             commands::figure::create_figure,
+            commands::figure::update_figure,
             commands::institution::get_all_institutions,
             commands::institution::create_institution,
+            commands::institution::update_institution,
             commands::event::get_all_events,
             commands::event::create_event,
+            commands::event::update_event,
             commands::geo::get_all_geos,
             commands::geo::create_geo,
+            commands::geo::update_geo,
             commands::work::get_all_works,
             commands::work::create_work,
+            commands::work::update_work,
             commands::school::get_all_schools_of_thought,
             commands::school::create_school_of_thought,
+            commands::school::update_school_of_thought,
             commands::search::search_entities
         ])
         .run(tauri::generate_context!())
