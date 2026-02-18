@@ -89,7 +89,10 @@ function App() {
   };
 
   return (
-    <div className="h-screen bg-black text-white w-full flex overflow-hidden">
+    <div 
+      className="h-screen text-white w-full flex overflow-hidden bg-cover bg-center bg-no-repeat bg-black"
+      style={{ backgroundImage: "url('/images/library_hero.jpg')" }}
+    >
       <Sidebar 
         currentView={view.type === "list" ? view.entityType : ""} 
         onChangeView={(type) => navigateToList(type as NavEntityType)} 
