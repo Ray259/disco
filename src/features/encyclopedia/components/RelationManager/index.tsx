@@ -5,7 +5,7 @@ export interface PendingRelation {
   targetId: string;
   targetName: string;
   targetType: string;
-  role: string; // The type of relation (e.g. "FOUNDER", "STUDENT")
+  role: string;
 }
 
 interface RelationManagerProps {
@@ -15,17 +15,13 @@ interface RelationManagerProps {
 
 export function RelationManager({ relations, onChange }: RelationManagerProps) {
   const handleSelect = (entity: any) => {
-    // Prevent adding duplicates
     if (relations.some(r => r.targetId === entity.id)) return;
-
-    const newRelation: PendingRelation = {
+    onChange([...relations, {
       targetId: entity.id,
       targetName: entity.name,
       targetType: entity.entity_type,
-      role: '', // User must specify
-    };
-
-    onChange([...relations, newRelation]);
+      role: '',
+    }]);
   };
 
   const handleRemove = (index: number) => {
@@ -41,7 +37,7 @@ export function RelationManager({ relations, onChange }: RelationManagerProps) {
   };
 
   return (
-    <div className="border-2 border-gray-200 p-4 bg-gray-50/50 mt-6">
+    <div className="border-2 border-[var(--c-border)] p-4 bg-[var(--c-dark)]/50 mt-6">
       <RelationSearch onSelect={handleSelect} />
       <RelationList 
         relations={relations} 

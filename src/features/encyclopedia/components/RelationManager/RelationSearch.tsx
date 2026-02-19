@@ -11,10 +11,7 @@ export function RelationSearch({ onSelect }: RelationSearchProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (query.length < 2) {
-      setResults([]);
-      return;
-    }
+    if (query.length < 2) { setResults([]); return; }
 
     const timer = setTimeout(async () => {
       setLoading(true);
@@ -26,7 +23,7 @@ export function RelationSearch({ onSelect }: RelationSearchProps) {
       } finally {
         setLoading(false);
       }
-    }, 300); // Debounce
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -36,7 +33,7 @@ export function RelationSearch({ onSelect }: RelationSearchProps) {
       <label className="block text-sm font-bold uppercase mb-1">Add Relation</label>
       <input
         type="text"
-        className="w-full p-2 border-2 border-gray-800 bg-white focus:outline-none focus:border-orange-500 font-mono"
+        className="w-full p-2 border-2 border-[var(--c-border)] bg-[var(--c-dark)] focus:outline-none focus:border-[var(--disco-accent-orange)] font-mono text-[var(--disco-text-primary)]"
         placeholder="Search for an entity..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -45,19 +42,15 @@ export function RelationSearch({ onSelect }: RelationSearchProps) {
       {loading && <div className="absolute top-10 right-2 text-xs">Scanning...</div>}
 
       {results.length > 0 && (
-        <ul className="absolute z-10 w-full bg-white border-2 border-gray-800 mt-1 max-h-48 overflow-y-auto shadow-lg">
+        <ul className="absolute z-10 w-full bg-[var(--c-panel)] border-2 border-[var(--c-border)] mt-1 max-h-48 overflow-y-auto shadow-lg">
           {results.map((r) => (
             <li 
               key={r.id}
-              className="p-2 hover:bg-orange-100 cursor-pointer border-b border-gray-200 last:border-0 flex justify-between items-center"
-              onClick={() => {
-                onSelect(r);
-                setQuery('');
-                setResults([]);
-              }}
+              className="p-2 hover:bg-[var(--c-deep)] cursor-pointer border-b border-[var(--c-border)] last:border-0 flex justify-between items-center"
+              onClick={() => { onSelect(r); setQuery(''); setResults([]); }}
             >
               <span className="font-bold">{r.name}</span>
-              <span className="text-xs uppercase bg-gray-200 px-1">{r.entity_type}</span>
+              <span className="text-xs uppercase bg-[var(--c-deep)] px-1">{r.entity_type}</span>
             </li>
           ))}
         </ul>

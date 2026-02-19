@@ -3,15 +3,28 @@
 
 :root {
   /* Disco Elysium Palette */
-  --disco-bg: #121212; /* Deep dark background */
-  --disco-panel: #1e1e1e; /* Slightly lighter panel */
-  --disco-text-primary: #d4d4d8; /* Dirty White */
-  --disco-text-secondary: #a1a1aa; /* Muted Gray */
+  --disco-bg: #121212;
+  --disco-panel: #1e1e1e;
+  --disco-text-primary: #d4d4d8;
+  --disco-text-secondary: #a1a1aa;
   
-  --disco-accent-orange: #d94f04; /* Skill Check Orange (Intellect) */
-  --disco-accent-teal: #1f8b86; /* Psyche Teal */
-  --disco-accent-yellow: #dcb037; /* Motorics Yellow */
-  --disco-accent-purple: #9b2c48; /* Physique Purple */
+  --disco-accent-orange: #d94f04;
+  --disco-accent-teal: #1f8b86;
+  --disco-accent-yellow: #dcb037;
+  --disco-accent-purple: #9b2c48;
+
+  /* Repeated neutral colors */
+  --c-dark: #0a0a0a;
+  --c-border: #333;
+  --c-border-light: #444;
+  --c-muted: #666;
+  --c-dim: #888;
+  --c-subtle: #999;
+  --c-surface: #151515;
+  --c-panel: #1a1a1b;
+  --c-deep: #222;
+  --c-faint: #555;
+  --c-ghost: #444;
 
   /* Typography */
   --font-header: Impact, "Arial Narrow", "Helvetica Neue", sans-serif;
@@ -21,10 +34,8 @@
   font-family: var(--font-body);
   line-height: 1.6;
   color: var(--disco-text-primary);
-  background-color: var(--disco-bg);
 }
 
-/* Explicit reset */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -33,23 +44,44 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-header);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: normal; /* Condensed fonts often don't need bold */
+  font-weight: normal;
 }
 
 input, button, select, textarea {
   font-family: var(--font-mono);
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f0f0f; }
+::-webkit-scrollbar-thumb { background: var(--c-border); }
+::-webkit-scrollbar-thumb:hover { background: var(--disco-accent-orange); }
+
+/* Shared utilities */
+.font-header { font-family: var(--font-header); }
+.font-mono { font-family: var(--font-mono); }
+.font-body { font-family: var(--font-body); }
+
+.label-mono {
+  @apply block text-xs uppercase tracking-widest mb-2;
+  font-family: var(--font-mono);
+  color: var(--c-muted);
 }
-::-webkit-scrollbar-track {
-  background: #0f0f0f;
+
+.text-mono-sm {
+  @apply text-xs uppercase tracking-wider;
+  font-family: var(--font-mono);
 }
-::-webkit-scrollbar-thumb {
-  background: #333;
+
+.btn-action {
+  @apply px-2 py-1 text-[10px] uppercase tracking-wider bg-black;
+  border: 1px solid var(--c-border-light);
+  color: var(--c-dim);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--disco-accent-orange);
+.btn-action:hover {
+  border-color: white;
+  color: white;
+}
+.btn-action--danger:hover {
+  border-color: #ef4444;
+  color: #ef4444;
 }

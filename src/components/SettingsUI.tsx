@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Volume2, VolumeX } from "lucide-react"; // Make sure lucide-react is installed
+import { X } from "lucide-react";
 
 interface SettingsUIProps {
   volume: number;
@@ -17,89 +17,84 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      {/* Container echoing the painterly, high-contrast look */}
-      <div 
-        className="relative w-full max-w-md bg-[#1d1b19] border-2 border-[#bfa275] shadow-2xl overflow-hidden"
-        style={{
-           // Subtle noise/texture effect often seen in the game UI
-           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`
-        }}
-      >
-        {/* Header Ribbon */}
-        <div className="flex justify-between items-center bg-gradient-to-r from-[#591410] to-[#8c2a1c] p-3 border-b border-[#bfa275]">
-           {/* Dobra-like font application (using a solid sans-serif fallback if font not loaded) */}
-          <h2 className="text-[#f2e6d8] font-bold text-xl tracking-wider uppercase" style={{ fontFamily: "'Dobra Black', 'Arial Black', sans-serif" }}>
-            Settings
-          </h2>
-          <button 
-            onClick={onClose} 
-            className="text-[#f2e6d8] hover:text-[#ffcca5] transition-colors p-1"
-          >
-            <X size={24} />
-          </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm font-header">
+        <style dangerouslySetInnerHTML={{__html: `
+          input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px; width: 16px; border-radius: 50%;
+            background: #f5f5f5; cursor: pointer;
+            border: 3px solid var(--c-dim);
+            box-shadow: 0 0 4px rgba(0,0,0,0.8);
+            margin-top: -6px;
+          }
+          input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 2px; cursor: pointer;
+            background: var(--c-subtle);
+          }
+        `}} />
+
+      <div className="flex bg-[var(--c-panel)]/95 border-2 border-[#111] shadow-2xl relative max-w-2xl w-full">
+        
+        <button 
+           onClick={onClose}
+           className="absolute top-4 right-4 text-[var(--c-muted)] hover:text-white transition-colors z-50 p-1"
+        >
+           <X size={24} />
+        </button>
+
+        <div className="w-[120px] bg-gradient-to-br from-[#c45511] via-[#94380b] to-[#752605] relative flex flex-col justify-center border-r-[3px] border-black/80 z-20">
+          <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+          />
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-black/40 border-r border-black/60 flex flex-col justify-between py-6 items-center text-[var(--c-subtle)] text-[10px]">
+             <span className="transform -rotate-90 origin-center whitespace-nowrap tracking-widest opacity-50">01A13</span>
+             <span className="transform -rotate-90 origin-center whitespace-nowrap tracking-widest opacity-50">2021-04-19</span>
+          </div>
         </div>
 
-        {/* Content Body (Sina Nova / Serif aesthetic) */}
-        <div className="p-6 text-[#d9cfc1]" style={{ fontFamily: "'Sina Nova', 'Libre Baskerville', 'Georgia', serif" }}>
-          
-          <div className="space-y-8">
-            {/* Audio Settings Section */}
-            <div>
-              <h3 className="text-lg text-[#bfa275] border-b border-[#3b352e] pb-1 mb-4 uppercase tracking-widest font-sans font-semibold">
-                Audio Options
-              </h3>
-              
-              <div className="flex flex-col gap-6 pl-2">
-                
-                {/* Volume Slider */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between">
-                    <label htmlFor="volume-slider" className="opacity-90 tracking-wide">
-                      Master Volume
-                    </label>
-                    <span className="text-[#bfa275] font-sans font-bold">
-                      {Math.round(volume * 100)}%
-                    </span>
-                  </div>
-                  
-                  <input
-                    id="volume-slider"
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={volume}
-                    onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                    className="w-full h-2 rounded-none appearance-none cursor-pointer bg-[#3b352e] border border-[#594d3f] accent-[#bfa275] hover:accent-[#ffcca5] transition-all"
-                  />
-                  {/* Note: Native range inputs are hard to style fully cross-browser, but basic accent-color helps */}
+        <div className="flex-1 flex flex-col items-center py-8">
+            <div className="flex w-full px-8 mb-8 uppercase text-2xl tracking-wider text-[var(--c-muted)]">
+                <div className="flex-1 bg-[#f5f5f5] text-black text-center py-1 shadow-md">
+                    Settings
                 </div>
+            </div>
 
-                {/* Mute Toggle */}
-                <div className="flex items-center justify-between mt-2">
-                  <span className="opacity-90 tracking-wide">Mute Audio</span>
-                  <button
-                    onClick={onMuteToggle}
-                    className={`flex items-center justify-center p-2 border-2 transition-all ${
-                      isMuted ? "bg-[#8c2a1c] border-[#bfa275] shadow-[0_0_10px_rgba(140,42,28,0.5)]" : "bg-[#2a2622] border-[#594d3f] hover:border-[#bfa275]"
-                    }`}
-                  >
-                    {isMuted ? (
-                      <VolumeX size={20} className="text-[#f2e6d8]" />
-                    ) : (
-                      <Volume2 size={20} className="text-[#bfa275]" />
-                    )}
-                  </button>
-                </div>
-              </div>
+            <div className="w-full px-8">
+                <table className="w-full uppercase text-base tracking-wider text-[var(--c-subtle)]">
+                  <tbody>
+                    <tr>
+                      <td className="w-[45%] text-right py-3 pr-4 uppercase text-[#dedede]">Music Volume</td>
+                      <td className="w-[55%] text-left py-3 pl-4 flex items-center text-[#dedede]">
+                        <span className="mr-2 text-xl font-sans text-[var(--c-muted)] leading-none">(</span>
+                        <input 
+                            type="range" 
+                            min="0" max="1" step="0.01" 
+                            value={volume}
+                            onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                            className="w-full max-w-[150px] appearance-none bg-transparent outline-none m-0 p-0" 
+                        />
+                        <span className="ml-2 text-xl font-sans text-[var(--c-muted)] leading-none">)</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td className="w-[45%] text-right py-3 pr-4 uppercase text-[#dedede]">Mute All Audio</td>
+                      <td className="w-[55%] text-left py-3 pl-4 flex items-center text-[#dedede]">
+                         <button 
+                            onClick={onMuteToggle}
+                            className="w-5 h-5 flex items-center justify-center bg-white hover:bg-white/80 transition-colors"
+                         >
+                            {!isMuted && <div className="w-full h-full bg-[#111] border border-white" />}
+                         </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
             </div>
             
-            {/* Disclaimer / Lore flavor */}
-            <div className="mt-8 pt-4 border-t border-[#3b352e] text-center opacity-60 italic text-sm">
+            <div className="mt-8 text-center text-[var(--c-muted)] text-xs font-mono italic px-8">
                "The static of Revachol hums beneath the music."
             </div>
-          </div>
         </div>
       </div>
     </div>

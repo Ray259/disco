@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Settings as SettingsIcon } from "lucide-react";
 import { SettingsUI } from "./components/SettingsUI";
 import { Sidebar } from "./components/Layout/Sidebar";
 import { FigureDetail } from "./features/encyclopedia/components/FigureDetail";
@@ -13,13 +12,11 @@ import "./App.css";
 function App() {
   const { view, navigateToList, navigateToDetail, navigateToCreate, navigateToEdit } = useEncyclopediaNavigation();
   
-  // Audio Settings State
   const [showSettings, setShowSettings] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Sync state with audio element
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
@@ -39,13 +36,10 @@ function App() {
         );
 
       case "edit":
-        // We range over keys to find which config has this entityType?
-        // view.entityType is like "figures", "institutions".
-        // ENTITY_CONFIG keys match this.
         const editConfig = ENTITY_CONFIG[view.entityType];
         return (
           <EntityCreate
-            initialType={editConfig?.createType || "Figure"} // Pass type to find correct config/color
+            initialType={editConfig?.createType || "Figure"}
             editId={view.id}
             onSuccess={() => navigateToList(view.entityType)}
             onCancel={() => navigateToList(view.entityType)}
@@ -53,7 +47,6 @@ function App() {
         );
 
       case "detail":
-        // For now, only Figures have a dedicated detail view.
         if (view.entityType === "figures") {
           return (
             <FigureDetail 
@@ -62,7 +55,7 @@ function App() {
             />
           );
         }
-        return <div className="p-8 text-gray-500">Detail view for {view.entityType} coming soon.</div>;
+        return <div className="p-8 text-[var(--disco-text-secondary)] h-full bg-[var(--c-dark)]/70 backdrop-blur-sm">Detail view for {view.entityType} coming soon.</div>;
 
       case "list":
         const config = ENTITY_CONFIG[view.entityType];
@@ -75,14 +68,8 @@ function App() {
             renderItem={config.renderer}
             onSelect={(item) => navigateToDetail(view.entityType, item.id)}
             onCreate={() => navigateToCreate(config.createType)}
-            onEdit={(item) => {
-                 console.log("App: onEdit triggered", item.id);
-                 navigateToEdit(view.entityType, item.id);
-            }}
-            onDelete={async (id) => { 
-                console.log("App: onDelete triggered", id);
-                await deleteEntity(id); 
-            }}
+            onEdit={(item) => navigateToEdit(view.entityType, item.id)}
+            onDelete={async (id) => await deleteEntity(id)}
           />
         );
     }
@@ -90,26 +77,18 @@ function App() {
 
   return (
     <div 
-      className="h-screen text-white w-full flex overflow-hidden bg-cover bg-center bg-no-repeat bg-black"
-      style={{ backgroundImage: "url('/images/library_hero.jpg')" }}
+      className="h-screen w-full flex overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/images/library_hero.jpg')", backgroundColor: "var(--disco-bg)" }}
     >
       <Sidebar 
         currentView={view.type === "list" ? view.entityType : ""} 
         onChangeView={(type) => navigateToList(type as NavEntityType)} 
+        onOpenSettings={() => setShowSettings(true)}
       />
       <main className="flex-1 h-full relative overflow-hidden">
         {renderContent()}
       </main>
 
-      {/* Top right settings button */}
-      <button 
-        onClick={() => setShowSettings(true)}
-        className="absolute top-4 right-4 z-40 p-2 text-[#bfa275] hover:text-[#f2e6d8] bg-[#1d1b19]/80 border border-[#594d3f] hover:border-[#bfa275] transition-all rounded shadow-lg backdrop-blur"
-      >
-        <SettingsIcon size={24} />
-      </button>
-
-      {/* Settings Modal */}
       {showSettings && (
         <SettingsUI
           volume={volume}
@@ -120,7 +99,6 @@ function App() {
         />
       )}
 
-      {/* Background Audio */}
       <audio 
         ref={audioRef}
         src="/audio/tiger_king.mp3" 
