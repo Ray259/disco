@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { SettingsUI } from "./components/SettingsUI";
 import { Sidebar } from "./components/Layout/Sidebar";
-import { FigureDetail } from "./features/encyclopedia/components/FigureDetail";
+import { EntityDetail } from "./features/encyclopedia/components/EntityDetail";
 import { GenericEntityList } from "./features/encyclopedia/components/GenericEntityList";
 import { EntityCreate } from "./features/encyclopedia/components/EntityCreate";
 import { ENTITY_CONFIG } from "./features/encyclopedia/components/EntityConfig";
@@ -47,15 +47,13 @@ function App() {
         );
 
       case "detail":
-        if (view.entityType === "figures") {
-          return (
-            <FigureDetail 
-              id={view.id} 
-              onBack={() => navigateToList("figures")} 
-            />
-          );
-        }
-        return <div className="p-8 text-[var(--disco-text-secondary)] h-full bg-[var(--c-dark)]/70 backdrop-blur-sm">Detail view for {view.entityType} coming soon.</div>;
+        return (
+          <EntityDetail
+            entityType={view.entityType}
+            id={view.id}
+            onBack={() => navigateToList(view.entityType)}
+          />
+        );
 
       case "list":
         const config = ENTITY_CONFIG[view.entityType];

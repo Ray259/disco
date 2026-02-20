@@ -107,6 +107,20 @@ pub async fn get_all_institutions(state: State<'_, EncyclopediaDb>) -> Result<Ve
     items
 }
 
+/// Retrieves a single Institution by ID.
+#[tauri::command]
+pub async fn get_institution(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Option<Institution>, String> {
+    let result = state.get_entity(id).await.map_err(|e| e.to_string())?;
+    match result {
+        Some((_type_str, _name, data)) => {
+            let mut entity: Institution = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+            entity.id = id;
+            Ok(Some(entity))
+        },
+        None => Ok(None)
+    }
+}
+
 /// Creates a new Institution and persists it.
 #[tauri::command]
 pub async fn create_institution(state: State<'_, EncyclopediaDb>, request: CreateInstitutionRequest) -> Result<String, String> {

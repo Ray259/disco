@@ -44,7 +44,7 @@ export function EntityCreate({ onSuccess, onCancel, initialType, editId }: Entit
 
   return (
     <div className="w-full h-full p-12 flex justify-center items-start overflow-y-auto bg-[var(--c-dark)]/70 backdrop-blur-sm">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl bg-[var(--c-dark)]/60 border border-[var(--c-border)] p-10">
         <div className="mb-12 text-center">
            <h2 className="text-3xl font-header uppercase tracking-wide mb-2" style={{ color: currentColor }}>
              {editId ? "Edit Entry" : "New Entry"}

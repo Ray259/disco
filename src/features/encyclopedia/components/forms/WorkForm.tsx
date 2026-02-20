@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createWork, updateWork, RelationDto } from "../../api";
 import { FormLayout, FormInput, FormTextArea } from "./SharedFormComponents";
+import { DatePicker } from "../../../../components/DatePicker";
 
 interface WorkFormProps {
   onSuccess: () => void;
@@ -79,13 +80,7 @@ export function WorkForm({ onSuccess, onCancel, extraRelations, initialValues, e
          <div className="flex justify-center">
            <div className="w-1/2">
              <label className="block text-[10px] text-[var(--c-ghost)] mb-1 font-mono text-center">PUBLISHED</label>
-             <input
-               type="text"
-               value={endYear} 
-               onChange={(e) => setEndYear(e.target.value)}
-               className="w-full bg-[var(--c-dark)] border border-[var(--c-border)] p-3 text-center text-xl font-mono text-[var(--disco-accent-yellow)] focus:border-[var(--disco-accent-orange)] outline-none"
-               placeholder="YYYY-MM-DD"
-             />
+             <DatePicker value={endYear} onChange={setEndYear} color="var(--disco-accent-yellow)" />
            </div>
          </div>
       </div>

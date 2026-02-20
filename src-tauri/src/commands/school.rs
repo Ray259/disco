@@ -71,6 +71,20 @@ pub async fn get_all_schools_of_thought(state: State<'_, EncyclopediaDb>) -> Res
     items
 }
 
+/// Retrieves a single SchoolOfThought by ID.
+#[tauri::command]
+pub async fn get_school_of_thought(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Option<SchoolOfThought>, String> {
+    let result = state.get_entity(id).await.map_err(|e| e.to_string())?;
+    match result {
+        Some((_type_str, _name, data)) => {
+            let mut entity: SchoolOfThought = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+            entity.id = id;
+            Ok(Some(entity))
+        },
+        None => Ok(None)
+    }
+}
+
 /// Creates a new School of Thought and persists it.
 #[tauri::command]
 pub async fn create_school_of_thought(state: State<'_, EncyclopediaDb>, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {

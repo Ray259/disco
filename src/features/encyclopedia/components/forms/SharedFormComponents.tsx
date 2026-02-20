@@ -1,4 +1,5 @@
 import React from "react";
+import { DatePicker } from "../../../../components/DatePicker";
 
 interface FormLayoutProps {
   children: React.ReactNode;
@@ -97,35 +98,18 @@ export function FormTextArea({ label, className = "", ...props }: FormTextAreaPr
 }
 
 export function TemporalCoordinates({ startYear, endYear, onStartChange, onEndChange, color = "var(--disco-accent-yellow)" }: TemporalCoordinatesProps) {
-  const inputCls = "w-full bg-[var(--c-dark)] border border-[var(--c-border)] p-3 text-center text-xl font-mono outline-none focus:border-[var(--disco-accent-orange)]";
-  
   return (
-    <div className="p-6 bg-[var(--c-surface)] border border-[var(--c-deep)] relative overflow-hidden">
-       <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[var(--c-border-light)]" />
-       <h3 className="label-mono mb-6 text-center">Temporal Coordinates</h3>
+    <div className="p-6 bg-[var(--c-surface)] border border-[var(--c-deep)]">
+       <h3 className="mb-6 text-center">Temporal Coordinates</h3>
        <div className="flex items-center gap-6">
          <div className="flex-1">
            <label className="block text-[10px] text-[var(--c-ghost)] mb-1 font-mono text-center">START</label>
-           <input
-             type="text"
-             value={startYear}
-             onChange={(e) => onStartChange(e.target.value)}
-             className={inputCls}
-             style={{ color }}
-             placeholder="YYYY-MM-DD"
-           />
+           <DatePicker value={startYear} onChange={onStartChange} color={color} />
          </div>
          <span className="text-[var(--c-border)] text-xl">&mdash;</span>
          <div className="flex-1">
            <label className="block text-[10px] text-[var(--c-ghost)] mb-1 font-mono text-center">END</label>
-           <input
-             type="text"
-             value={endYear} 
-             onChange={(e) => onEndChange(e.target.value)}
-             className={inputCls}
-             style={{ color }}
-             placeholder="YYYY-MM-DD"
-           />
+           <DatePicker value={endYear} onChange={onEndChange} color={color} />
          </div>
        </div>
     </div>

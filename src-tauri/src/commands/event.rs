@@ -92,6 +92,20 @@ pub async fn get_all_events(state: State<'_, EncyclopediaDb>) -> Result<Vec<Even
     items
 }
 
+/// Retrieves a single Event by ID.
+#[tauri::command]
+pub async fn get_event(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Option<Event>, String> {
+    let result = state.get_entity(id).await.map_err(|e| e.to_string())?;
+    match result {
+        Some((_type_str, _name, data)) => {
+            let mut entity: Event = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+            entity.id = id;
+            Ok(Some(entity))
+        },
+        None => Ok(None)
+    }
+}
+
 /// Creates a new Event and persists it.
 #[tauri::command]
 pub async fn create_event(state: State<'_, EncyclopediaDb>, request: CreateEventRequest) -> Result<String, String> {
