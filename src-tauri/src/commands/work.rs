@@ -1,6 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 use crate::core::db::EncyclopediaDb;
+use crate::core::vault::VaultManager;
 use crate::core::domain::models::work::Work;
 use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
@@ -87,11 +88,11 @@ pub async fn get_work(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Opti
 
 /// Creates a new Work and persists it.
 #[tauri::command]
-pub async fn create_work(state: State<'_, EncyclopediaDb>, request: CreateWorkRequest) -> Result<String, String> {
-    handle_create(state, request).await
+pub async fn create_work(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateWorkRequest) -> Result<String, String> {
+    handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_work(state: State<'_, EncyclopediaDb>, id: Uuid, request: CreateWorkRequest) -> Result<String, String> {
-    handle_update(state, id, request).await
+pub async fn update_work(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, id: Uuid, request: CreateWorkRequest) -> Result<String, String> {
+    handle_update(state, vault, id, request).await
 }

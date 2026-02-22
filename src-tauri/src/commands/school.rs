@@ -1,6 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 use crate::core::db::EncyclopediaDb;
+use crate::core::vault::VaultManager;
 use crate::core::domain::models::school_of_thought::SchoolOfThought;
 use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
@@ -87,11 +88,11 @@ pub async fn get_school_of_thought(state: State<'_, EncyclopediaDb>, id: Uuid) -
 
 /// Creates a new School of Thought and persists it.
 #[tauri::command]
-pub async fn create_school_of_thought(state: State<'_, EncyclopediaDb>, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
-    handle_create(state, request).await
+pub async fn create_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
+    handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_school_of_thought(state: State<'_, EncyclopediaDb>, id: Uuid, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
-    handle_update(state, id, request).await
+pub async fn update_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, id: Uuid, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
+    handle_update(state, vault, id, request).await
 }

@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 
 interface SettingsUIProps {
   volume: number;
@@ -16,6 +18,44 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
   onMuteToggle,
   onClose,
 }) => {
+  const [vaultPath, setVaultPath] = useState<string>("Loading...");
+
+  useEffect(() => {
+    const fetchVaultPath = async () => {
+      try {
+        const path = await invoke<string>("get_vault_path");
+        setVaultPath(path || "No Vault Selected");
+      } catch (err) {
+        console.error("Failed to get vault path", err);
+        setVaultPath("Error loading path");
+      }
+    };
+    fetchVaultPath();
+  }, []);
+
+  const handleChangeVault = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Select Vault Folder",
+      });
+      
+      if (selected && typeof selected === 'string') {
+        setVaultPath("Updating...");
+        await invoke("set_vault_path", { newPath: selected });
+        // Fetch it again to confirm it was set
+        const updatedPath = await invoke<string>("get_vault_path");
+        setVaultPath(updatedPath || "No Vault Selected");
+      }
+    } catch (err) {
+      console.error("Failed to change vault path", err);
+      // fallback to refetching the old path
+      const path = await invoke<string>("get_vault_path").catch(() => "Error");
+      setVaultPath(path || "No Vault Selected");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm font-header">
         <style dangerouslySetInnerHTML={{__html: `
@@ -86,6 +126,22 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
                          >
                             {!isMuted && <div className="w-full h-full bg-[#111] border border-white" />}
                          </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="w-[45%] text-right py-3 pr-4 uppercase text-[#dedede]">Vault Location</td>
+                      <td className="w-[55%] text-left py-3 pl-4 flex flex-col justify-center text-[#dedede]">
+                         <div className="flex items-center space-x-3">
+                             <button 
+                                onClick={handleChangeVault}
+                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 text-xs transition-colors"
+                             >
+                                CHANGE
+                             </button>
+                             <div className="text-xs font-mono lowercase truncate max-w-[200px] opacity-70" title={vaultPath}>
+                                {vaultPath}
+                             </div>
+                         </div>
                       </td>
                     </tr>
                   </tbody>

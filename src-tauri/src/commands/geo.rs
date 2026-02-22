@@ -1,6 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 use crate::core::db::EncyclopediaDb;
+use crate::core::vault::VaultManager;
 use crate::core::domain::models::geo::Geo;
 use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
@@ -104,11 +105,11 @@ pub async fn get_geo(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Optio
 
 /// Creates a new Location and persists it.
 #[tauri::command]
-pub async fn create_geo(state: State<'_, EncyclopediaDb>, request: CreateGeoRequest) -> Result<String, String> {
-    handle_create(state, request).await
+pub async fn create_geo(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateGeoRequest) -> Result<String, String> {
+    handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_geo(state: State<'_, EncyclopediaDb>, id: Uuid, request: CreateGeoRequest) -> Result<String, String> {
-    handle_update(state, id, request).await
+pub async fn update_geo(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, id: Uuid, request: CreateGeoRequest) -> Result<String, String> {
+    handle_update(state, vault, id, request).await
 }

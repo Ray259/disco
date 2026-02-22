@@ -1,6 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 use crate::core::db::EncyclopediaDb;
+use crate::core::vault::VaultManager;
 use crate::core::domain::models::institution::Institution;
 use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
@@ -123,11 +124,11 @@ pub async fn get_institution(state: State<'_, EncyclopediaDb>, id: Uuid) -> Resu
 
 /// Creates a new Institution and persists it.
 #[tauri::command]
-pub async fn create_institution(state: State<'_, EncyclopediaDb>, request: CreateInstitutionRequest) -> Result<String, String> {
-    handle_create(state, request).await
+pub async fn create_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateInstitutionRequest) -> Result<String, String> {
+    handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_institution(state: State<'_, EncyclopediaDb>, id: Uuid, request: CreateInstitutionRequest) -> Result<String, String> {
-    handle_update(state, id, request).await
+pub async fn update_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, id: Uuid, request: CreateInstitutionRequest) -> Result<String, String> {
+    handle_update(state, vault, id, request).await
 }

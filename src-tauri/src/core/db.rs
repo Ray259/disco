@@ -1,5 +1,4 @@
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
-use std::path::Path;
 use uuid::Uuid;
 use crate::core::domain::values::entity_ref::EntityType;
 
@@ -53,6 +52,7 @@ impl EncyclopediaDb {
                 entity_type TEXT NOT NULL,
                 name TEXT NOT NULL,
                 data TEXT NOT NULL,
+                file_path TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
@@ -76,6 +76,20 @@ impl EncyclopediaDb {
         )
         .execute(&self.pool)
         .await?;
+
+        // Migration: add file_path column if it doesn't exist (for existing DBs)
+        let _ = sqlx::query("ALTER TABLE entities ADD COLUMN file_path TEXT")
+            .execute(&self.pool)
+            .await;
+
+        Ok(())
+    }
+
+    /// Empties the entire database by deleting all rows from entities and relations.
+    /// Used when switching vault directories to ensure 1 vault maps to 1 db.
+    pub async fn empty_database(&self) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM relations").execute(&self.pool).await?;
+        sqlx::query("DELETE FROM entities").execute(&self.pool).await?;
         Ok(())
     }
 
@@ -132,6 +146,64 @@ impl EncyclopediaDb {
             .execute(&self.pool)
             .await?;
             
+        Ok(result.rows_affected())
+    }
+
+    /// Upserts an entity — inserts or replaces based on UUID.
+    /// Used by the vault sync to update SQLite from markdown files.
+    pub async fn upsert_entity(&self, id: Uuid, entity_type: EntityType, name: &str, data: &str, file_path: &str) -> Result<(), sqlx::Error> {
+        let now = chrono::Utc::now().to_rfc3339();
+        sqlx::query(
+            "INSERT OR REPLACE INTO entities (id, entity_type, name, data, file_path, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+        )
+        .bind(id.to_string())
+        .bind(entity_type.to_string())
+        .bind(name)
+        .bind(data)
+        .bind(file_path)
+        .bind(&now)
+        .bind(&now)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    /// Returns the file_path for an entity by UUID.
+    pub async fn get_entity_file_path(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+        let row: Option<(String,)> = sqlx::query_as(
+            "SELECT file_path FROM entities WHERE id = $1"
+        )
+        .bind(id.to_string())
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(row.map(|(p,)| p))
+    }
+
+    /// Deletes an entity from SQLite by its file path.
+    /// Used when the watcher detects a file deletion.
+    pub async fn delete_entity_by_file_path(&self, file_path: &str) -> Result<u64, sqlx::Error> {
+        // First find the entity ID to clean up relations
+        let row: Option<(String,)> = sqlx::query_as(
+            "SELECT id FROM entities WHERE file_path = $1"
+        )
+        .bind(file_path)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if let Some((id_str,)) = row {
+            if let Ok(id) = Uuid::parse_str(&id_str) {
+                // Delete relations
+                sqlx::query("DELETE FROM relations WHERE from_id = $1 OR to_id = $1")
+                    .bind(id.to_string())
+                    .execute(&self.pool)
+                    .await?;
+            }
+        }
+
+        let result = sqlx::query("DELETE FROM entities WHERE file_path = $1")
+            .bind(file_path)
+            .execute(&self.pool)
+            .await?;
         Ok(result.rows_affected())
     }
 
