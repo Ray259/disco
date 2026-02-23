@@ -35,60 +35,6 @@ Captures the historical context surrounding a figure.
 | **Institution** | An organization (school, party, empire). | Founders (`Figure`), Location (`Geo`). |
 | **Geo** | A physical location (city, region). | Referenced by all. |
 
-## relationships Visualization
-
-The following diagram illustrates how entities are interconnected in the domain graph:
-
-```mermaid
-classDiagram
-    direction TB
-
-    class Figure {
-        +RichContent axiom
-        +Zeitgeist zeitgeist
-        +adheres_to()
-    }
-
-    class Work {
-        +String title
-        +DateRange publication_date
-    }
-
-    class Event {
-        +String name
-        +DateRange date
-    }
-
-    class Institution {
-        +String name
-        +DateRange founded
-    }
-
-    class Geo {
-        +String name
-        +String region
-    }
-
-    %% Relationships
-    Figure "1" --> "*" Work : authors
-    Figure "*" --> "*" Event : participates_in
-    Figure "*" --> "*" Institution : founded/led
-    Figure "*" --> "*" Figure : influenced_by (Zeitgeist)
-    Figure "*" --> "*" Figure : opposed (Zeitgeist)
-    
-    Work "*" --> "*" Figure : references
-    Work "*" --> "*" Event : discusses
-
-    Event "*" --> "1" Geo : located_at
-    Event "*" --> "*" Event : caused/triggered
-    
-    Institution "*" --> "1" Geo : located_at
-    Institution "*" --> "*" Figure : members
-
-    %% RichContent Links (implicit)
-    Figure ..> Event : catalyst (Zeitgeist)
-    Figure ..> Institution : opposition (Zeitgeist)
-```
 
 ## Data Storage
 

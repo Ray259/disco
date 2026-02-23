@@ -85,3 +85,213 @@ input, button, select, textarea {
   border-color: #ef4444;
   color: #ef4444;
 }
+
+/* ─── Special Field Components ─── */
+
+.special-section {
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid var(--c-border);
+  padding: 1.5rem;
+  position: relative;
+  animation: specialFadeIn 0.3s ease-out;
+}
+
+.special-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--section-accent, var(--c-border)), transparent);
+  opacity: 0.4;
+}
+
+.special-section__card {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.special-section__card-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  opacity: 0.6;
+}
+
+/* Axiom */
+.axiom-field {
+  position: relative;
+  padding: 1.5rem;
+  padding-left: 3rem;
+  background: rgba(15, 15, 15, 0.8);
+  border-left: 2px solid var(--disco-accent-yellow);
+}
+
+.axiom-field__quote-mark {
+  position: absolute;
+  top: -0.5rem;
+  left: 0.5rem;
+  font-size: 4rem;
+  font-family: Georgia, serif;
+  color: var(--c-deep);
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.axiom-field__textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--disco-text-primary);
+  resize: none;
+}
+
+.axiom-field__textarea:focus {
+  outline: none;
+}
+
+.axiom-field__textarea::placeholder {
+  color: var(--c-ghost);
+  font-style: italic;
+}
+
+/* Argument Flow */
+.argument-flow {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.argument-flow__line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--disco-accent-yellow) 0px,
+    var(--disco-accent-yellow) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  opacity: 0.4;
+}
+
+.argument-flow__textarea {
+  width: 100%;
+  background: rgba(15, 15, 15, 0.5);
+  border: 1px solid var(--c-border);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 2;
+  color: var(--disco-text-primary);
+  resize: none;
+}
+
+.argument-flow__textarea:focus {
+  outline: none;
+  border-color: var(--disco-accent-yellow);
+}
+
+.argument-flow__textarea::placeholder {
+  color: var(--c-ghost);
+}
+
+/* Lineage Flow */
+.lineage-flow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.lineage-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.lineage-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--c-border);
+  background: rgba(20, 20, 20, 0.8);
+  transition: border-color 0.15s;
+}
+
+.lineage-chip:hover {
+  border-color: var(--c-dim);
+}
+
+.lineage-flow__arrow {
+  display: flex;
+  align-items: center;
+  padding-top: 2rem;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.lineage-flow__arrow-line {
+  width: 12px;
+  height: 1px;
+  background: var(--c-border);
+}
+
+.lineage-flow__arrow-head {
+  font-size: 8px;
+  color: var(--c-ghost);
+  line-height: 1;
+}
+
+.lineage-flow__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.5rem;
+  flex-shrink: 0;
+}
+
+.lineage-flow__center-diamond {
+  font-size: 1.25rem;
+  color: #a78bfa;
+  text-shadow: 0 0 8px rgba(167, 139, 250, 0.3);
+}
+
+/* Legacy Cards */
+.legacy-card {
+  display: flex;
+  position: relative;
+  background: rgba(12, 12, 12, 0.8);
+  animation: legacySlideIn 0.35s ease-out backwards;
+}
+
+.legacy-card__border {
+  width: 3px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.legacy-card__content {
+  flex: 1;
+  padding: 1rem 1.25rem;
+}
+
+@keyframes specialFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes legacySlideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
