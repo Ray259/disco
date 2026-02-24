@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
-import { createFigure, updateFigure, RelationDto } from "../../api";
+import React, { useState, useEffect } from "react";
+import { createFigure, updateFigure, createGeo, SearchResult, RelationDto } from "../../api";
 import { FormLayout, FormInput, FormTextArea, TemporalCoordinates } from "./SharedFormComponents";
+import { RelationSearch } from "../RelationManager/RelationSearch";
 import { useFormState } from "../../../../hooks/useFormState";
 import {
   ZeitgeistField, ZeitgeistState,
   CoreIdeologyField, CoreIdeologyState,
   LineageField, LineageState,
   LegacyField, LegacyState,
+  TerminologyField, TerminologyState,
+  ContributionsField, ContributionsState,
+  InstitutionalField, InstitutionalState,
 } from "./SpecialFields";
 
 interface FigureFormProps {
@@ -33,11 +37,14 @@ interface FigureFormState {
   quote: string;
   startYear: string;
   endYear: string;
-  // Special fields (UI-only for now)
+  // special fields
   zeitgeist: ZeitgeistState;
   coreIdeology: CoreIdeologyState;
   lineage: LineageState;
   legacy: LegacyState;
+  terminology: TerminologyState;
+  contributions: ContributionsState;
+  institutional: InstitutionalState;
 }
 
 const INITIAL_STATE: FigureFormState = {
@@ -51,7 +58,72 @@ const INITIAL_STATE: FigureFormState = {
   coreIdeology: { axiom: "", argumentFlow: "" },
   lineage: { predecessors: [], rivals: [], successors: [] },
   legacy: { shortTermSuccess: "", modernRelevance: "", criticalFlaw: "", personalSynthesis: "" },
+  terminology: { entries: [] },
+  contributions: { entries: [] },
+  institutional: { fundingModel: "", institutionalProduct: "", successionPlan: "" },
 };
+
+/* GeoPickerField — owns the create-Geo flow; RelationSearch is purely search/select */
+function GeoPickerField({ value, onPick, onClear }: {
+  value: string;
+  onPick: (name: string) => void;
+  onClear: () => void;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const handleCreate = async () => {
+    if (!query.trim()) return;
+    setCreating(true);
+    try {
+      const newId = await createGeo({ name: query.trim() });
+      onPick(query.trim(), newId);
+      setQuery("");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (value) {
+    return (
+      <div>
+        <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-1 text-[var(--disco-accent-purple)]">3. Origin</label>
+        <div className="flex items-center gap-2 border-b border-[var(--c-border)] py-2">
+          <span className="text-sm font-body text-[var(--disco-text-primary)] flex-1">{value}</span>
+          <button type="button" onClick={onClear}
+            className="text-[9px] font-mono text-[var(--c-ghost)] hover:text-white uppercase tracking-wider">change</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <RelationSearch
+        label="3. Origin"
+        placeholder="Search existing locations..."
+        entityType="Geo"
+        onSelect={(r: SearchResult) => onPick(r.name, r.id)}
+      />
+      <div className="flex gap-2 items-center">
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleCreate(); } }}
+          placeholder="Or type a new location name..."
+          className="flex-1 bg-transparent border-b border-dashed border-[var(--c-border)] py-1 text-xs font-mono text-[var(--disco-text-secondary)] focus:outline-none placeholder-[var(--c-ghost)]"
+        />
+        {query.trim() && (
+          <button type="button" onClick={handleCreate}
+            className="text-[9px] font-mono text-[var(--disco-accent-yellow)] hover:text-white uppercase tracking-wider whitespace-nowrap">
+            {creating ? "Creating..." : `+ Create`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function FigureForm({ onSuccess, onCancel, extraRelations, initialValues, editId }: FigureFormProps) {
   const [form, setField, resetForm] = useFormState<FigureFormState>(INITIAL_STATE);
@@ -68,7 +140,6 @@ export function FigureForm({ onSuccess, onCancel, extraRelations, initialValues,
         quote: getText(initialValues.defining_quote),
         startYear: initialValues.life?.start?.split("-")[0] || "",
         endYear: initialValues.life?.end?.split("-")[0] || "",
-        // Special fields would be hydrated here once backend sends them
       });
     }
   }, [initialValues]);
@@ -119,6 +190,7 @@ export function FigureForm({ onSuccess, onCancel, extraRelations, initialValues,
     >
       {/* ── BASIC FIELDS ── */}
       <FormInput
+        className="uppercase"        
         label="1. Designation"
         value={form.name}
         onChange={(e) => setField("name", e.target.value)}
@@ -128,7 +200,13 @@ export function FigureForm({ onSuccess, onCancel, extraRelations, initialValues,
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <FormInput label="2. Role" value={form.role} onChange={(e) => setField("role", e.target.value)} />
-        <FormInput label="3. Origin" value={form.location} onChange={(e) => setField("location", e.target.value)} />
+
+        {/* Origin - search or create */}
+        <GeoPickerField
+          value={form.location}
+          onPick={(name) => setField("location", name)}
+          onClear={() => setField("location", "")}
+        />
       </div>
 
       <FormTextArea
@@ -147,7 +225,7 @@ export function FigureForm({ onSuccess, onCancel, extraRelations, initialValues,
         onEndChange={(v) => setField("endYear", v)}
       />
 
-      {/* ── SPECIAL FIELDS (UI-only, not wired to backend yet) ── */}
+      {/* ── SPECIAL FIELDS ── */}
 
       <ZeitgeistField
         value={form.zeitgeist}
@@ -167,6 +245,21 @@ export function FigureForm({ onSuccess, onCancel, extraRelations, initialValues,
       <LegacyField
         value={form.legacy}
         onChange={(v) => setField("legacy", v)}
+      />
+
+      <TerminologyField
+        value={form.terminology}
+        onChange={(v) => setField("terminology", v)}
+      />
+
+      <ContributionsField
+        value={form.contributions}
+        onChange={(v) => setField("contributions", v)}
+      />
+
+      <InstitutionalField
+        value={form.institutional}
+        onChange={(v) => setField("institutional", v)}
       />
     </FormLayout>
   );

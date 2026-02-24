@@ -10,7 +10,7 @@ use crate::core::domain::traits::InputDto;
 use serde::Deserialize;
 use chrono::NaiveDate;
 use super::RelationDto;
-use super::common::{handle_create, handle_update};
+use super::common::{handle_create, handle_update, parse_flexible_date};
 
 // Helper to convert DB result to Figure
 fn parse_figure(id: Uuid, _name: String, data: String) -> Result<Figure, String> {
@@ -36,12 +36,8 @@ impl InputDto<Figure> for CreateFigureRequest {
         let role_content = RichContent::from_text(&self.role);
         let location_content = RichContent::from_text(&self.location);
         
-        let start_date = NaiveDate::parse_from_str(&self.start_year, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.start_year), "%Y-%m-%d"))
-            .map_err(|_| "Invalid start year format".to_string())?;
-        let end_date = NaiveDate::parse_from_str(&self.end_year, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.end_year), "%Y-%m-%d"))
-            .map_err(|_| "Invalid end year format".to_string())?;
+        let start_date = parse_flexible_date(&self.start_year, "start")?;
+        let end_date = parse_flexible_date(&self.end_year, "end")?;
 
         let life = DateRange {
             start: start_date,
@@ -70,12 +66,8 @@ impl InputDto<Figure> for CreateFigureRequest {
         figure.primary_role = RichContent::from_text(&self.role);
         figure.primary_location = RichContent::from_text(&self.location);
         
-        let start_date = NaiveDate::parse_from_str(&self.start_year, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.start_year), "%Y-%m-%d"))
-            .map_err(|_| "Invalid start year format".to_string())?;
-        let end_date = NaiveDate::parse_from_str(&self.end_year, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.end_year), "%Y-%m-%d"))
-            .map_err(|_| "Invalid end year format".to_string())?;
+        let start_date = parse_flexible_date(&self.start_year, "start")?;
+        let end_date = parse_flexible_date(&self.end_year, "end")?;
 
         figure.life = DateRange { start: start_date, end: end_date };
         

@@ -10,7 +10,7 @@ use crate::core::domain::traits::InputDto;
 use serde::Deserialize;
 use chrono::NaiveDate;
 use super::RelationDto;
-use super::common::{handle_create, handle_update};
+use super::common::{handle_create, handle_update, parse_flexible_date};
 
 /// DTO for creating a new Institution.
 #[derive(Deserialize)]
@@ -34,12 +34,8 @@ impl InputDto<Institution> for CreateInstitutionRequest {
 
         if let (Some(start), Some(end)) = (&self.founded_start, &self.founded_end) {
             if !start.is_empty() && !end.is_empty() {
-                 let s = NaiveDate::parse_from_str(start, "%Y-%m-%d")
-                    .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", start), "%Y-%m-%d"))
-                    .map_err(|_| "Invalid founded start year".to_string())?;
-                 let e = NaiveDate::parse_from_str(end, "%Y-%m-%d")
-                    .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", end), "%Y-%m-%d"))
-                    .map_err(|_| "Invalid founded end year".to_string())?;
+                 let s = parse_flexible_date(start, "founded start")?;
+                 let e = parse_flexible_date(end, "founded end")?;
                  
                  institution.founded = Some(DateRange::new(s, e));
             }
@@ -63,12 +59,8 @@ impl InputDto<Institution> for CreateInstitutionRequest {
     
         if let (Some(start), Some(end)) = (&self.founded_start, &self.founded_end) {
             if !start.is_empty() && !end.is_empty() {
-                 let s = NaiveDate::parse_from_str(start, "%Y-%m-%d")
-                    .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", start), "%Y-%m-%d"))
-                    .map_err(|_| "Invalid founded start year".to_string())?;
-                 let e = NaiveDate::parse_from_str(end, "%Y-%m-%d")
-                    .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", end), "%Y-%m-%d"))
-                    .map_err(|_| "Invalid founded end year".to_string())?;
+                 let s = parse_flexible_date(start, "founded start")?;
+                 let e = parse_flexible_date(end, "founded end")?;
                  
                  institution.founded = Some(DateRange::new(s, e));
             } else {

@@ -4,6 +4,16 @@ use crate::core::db::EncyclopediaDb;
 use crate::core::vault::VaultManager;
 use crate::core::domain::traits::{DomainEntity, InputDto};
 use crate::core::markdown::MarkdownSerializable;
+use chrono::NaiveDate;
+
+/// Parses YYYY-MM-DD, YYYY-MM (day→01), or YYYY (month+day→01-01).
+pub fn parse_flexible_date(s: &str, field: &str) -> Result<NaiveDate, String> {
+    NaiveDate::parse_from_str(s, "%Y-%m-%d")
+        .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01", s), "%Y-%m-%d"))
+        .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", s), "%Y-%m-%d"))
+        .map_err(|_| format!("Invalid date for {field}: expected YYYY, YYYY-MM, or YYYY-MM-DD"))
+}
+
 
 /// Generic Create Handler
 /// 

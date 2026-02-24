@@ -10,7 +10,7 @@ use crate::core::domain::traits::InputDto;
 use serde::Deserialize;
 use chrono::NaiveDate;
 use super::RelationDto;
-use super::common::{handle_create, handle_update};
+use super::common::{handle_create, handle_update, parse_flexible_date};
 
 /// DTO for creating a new Event.
 #[derive(Deserialize)]
@@ -24,12 +24,8 @@ pub struct CreateEventRequest {
 
 impl InputDto<Event> for CreateEventRequest {
     fn to_entity(&self, id: Uuid) -> Result<Event, String> {
-        let start_date = NaiveDate::parse_from_str(&self.start_date, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.start_date), "%Y-%m-%d"))
-            .map_err(|_| "Invalid start date".to_string())?;
-        let end_date = NaiveDate::parse_from_str(&self.end_date, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.end_date), "%Y-%m-%d"))
-            .map_err(|_| "Invalid end date".to_string())?;
+        let start_date = parse_flexible_date(&self.start_date, "start")?;
+        let end_date = parse_flexible_date(&self.end_date, "end")?;
 
         let date_range = DateRange { start: start_date, end: end_date };
         let mut event = Event::new(id, self.name.clone(), date_range);
@@ -45,12 +41,8 @@ impl InputDto<Event> for CreateEventRequest {
     fn update_entity(&self, event: &mut Event) -> Result<(), String> {
         event.name = self.name.clone();
         
-        let start_date = NaiveDate::parse_from_str(&self.start_date, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.start_date), "%Y-%m-%d"))
-            .map_err(|_| "Invalid start date".to_string())?;
-        let end_date = NaiveDate::parse_from_str(&self.end_date, "%Y-%m-%d")
-            .or_else(|_| NaiveDate::parse_from_str(&format!("{}-01-01", self.end_date), "%Y-%m-%d"))
-            .map_err(|_| "Invalid end date".to_string())?;
+        let start_date = parse_flexible_date(&self.start_date, "start")?;
+        let end_date = parse_flexible_date(&self.end_date, "end")?;
 
         event.date_range = DateRange { start: start_date, end: end_date };
         

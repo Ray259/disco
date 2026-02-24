@@ -459,3 +459,245 @@ export function LegacyField({ value, onChange }: LegacyFieldProps) {
     </div>
   );
 }
+
+/* ─────────────────────────────────────────────
+   5. KEY TERMINOLOGY — "Lexicon"
+   ───────────────────────────────────────────── */
+
+export interface TermEntry {
+  term: string;
+  definition: string;
+}
+
+export interface TerminologyState {
+  entries: TermEntry[];
+}
+
+interface TerminologyFieldProps {
+  value: TerminologyState;
+  onChange: (v: TerminologyState) => void;
+}
+
+export function TerminologyField({ value, onChange }: TerminologyFieldProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [draftTerm, setDraftTerm] = useState("");
+  const [draftDef, setDraftDef] = useState("");
+
+  const addEntry = () => {
+    if (!draftTerm.trim()) return;
+    onChange({ entries: [...value.entries, { term: draftTerm.trim(), definition: draftDef.trim() }] });
+    setDraftTerm("");
+    setDraftDef("");
+  };
+
+  const removeEntry = (i: number) => {
+    onChange({ entries: value.entries.filter((_, idx) => idx !== i) });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && e.shiftKey && draftTerm.trim()) {
+      e.preventDefault();
+      addEntry();
+    }
+  };
+
+  return (
+    <div>
+      <SectionDivider label="Key Terminology" color="#06b6d4" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+
+      {!collapsed && (
+        <div className="special-section" style={{ "--section-accent": "#06b6d4" } as React.CSSProperties}>
+          {/* Existing entries */}
+          <div className="space-y-3 mb-6">
+            {value.entries.map((entry, i) => (
+              <div key={i} className="terminology-entry">
+                <div className="terminology-entry__term">{entry.term}</div>
+                <div className="terminology-entry__def">{entry.definition || "—"}</div>
+                <button type="button" onClick={() => removeEntry(i)} className="terminology-entry__remove">×</button>
+              </div>
+            ))}
+            {value.entries.length === 0 && (
+              <div className="text-[10px] font-mono text-[var(--c-ghost)] italic text-center py-4">No terms defined yet</div>
+            )}
+          </div>
+
+          {/* New entry input */}
+          <div className="grid grid-cols-[1fr_2fr_auto] gap-3 items-end">
+            <div>
+              <label className="block text-[9px] font-mono uppercase tracking-[0.2em] mb-1 text-[#06b6d4]">Term</label>
+              <input
+                type="text"
+                value={draftTerm}
+                onChange={e => setDraftTerm(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="e.g. Übermensch"
+                className="w-full bg-transparent border-b border-[var(--c-border)] py-1 text-xs font-mono text-[var(--disco-text-primary)] focus:outline-none placeholder-[var(--c-ghost)]"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] font-mono uppercase tracking-[0.2em] mb-1 text-[var(--c-muted)]">Definition</label>
+              <input
+                type="text"
+                value={draftDef}
+                onChange={e => setDraftDef(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Meaning or context..."
+                className="w-full bg-transparent border-b border-[var(--c-border)] py-1 text-xs font-mono text-[var(--disco-text-secondary)] focus:outline-none placeholder-[var(--c-ghost)]"
+              />
+            </div>
+            <button type="button" onClick={addEntry} className="btn-action text-[#06b6d4] border-[#06b6d4]/40 hover:border-[#06b6d4]">+ Add</button>
+          </div>
+          <span className="text-[9px] font-mono text-[var(--c-ghost)] mt-1 block">Shift+Enter to add</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   6. MAJOR CONTRIBUTIONS — "Timeline"
+   ───────────────────────────────────────────── */
+
+export interface ContributionEntry {
+  title: string;
+  date: string;
+  impact: string;
+}
+
+export interface ContributionsState {
+  entries: ContributionEntry[];
+}
+
+interface ContributionsFieldProps {
+  value: ContributionsState;
+  onChange: (v: ContributionsState) => void;
+}
+
+export function ContributionsField({ value, onChange }: ContributionsFieldProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [draft, setDraft] = useState<ContributionEntry>({ title: "", date: "", impact: "" });
+
+  const addEntry = () => {
+    if (!draft.title.trim()) return;
+    onChange({ entries: [...value.entries, { ...draft, title: draft.title.trim(), impact: draft.impact.trim() }] });
+    setDraft({ title: "", date: "", impact: "" });
+  };
+
+  const removeEntry = (i: number) => {
+    onChange({ entries: value.entries.filter((_, idx) => idx !== i) });
+  };
+
+  return (
+    <div>
+      <SectionDivider label="Major Contributions" color="var(--disco-accent-orange)" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+
+      {!collapsed && (
+        <div className="special-section" style={{ "--section-accent": "var(--disco-accent-orange)" } as React.CSSProperties}>
+          {/* Timeline entries */}
+          <div className="contributions-timeline">
+            {value.entries.map((entry, i) => (
+              <div key={i} className="contributions-entry">
+                <div className="contributions-entry__marker" />
+                <div className="contributions-entry__content">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-xs font-header uppercase tracking-wider text-[var(--disco-accent-orange)]">{entry.title}</span>
+                    {entry.date && <span className="text-[9px] font-mono text-[var(--c-ghost)]">{entry.date}</span>}
+                    <button type="button" onClick={() => removeEntry(i)} className="ml-auto text-[10px] text-[var(--c-ghost)] hover:text-red-400">×</button>
+                  </div>
+                  {entry.impact && <p className="text-xs font-body text-[var(--disco-text-secondary)] mt-1">{entry.impact}</p>}
+                </div>
+              </div>
+            ))}
+            {value.entries.length === 0 && (
+              <div className="text-[10px] font-mono text-[var(--c-ghost)] italic text-center py-4">No contributions recorded</div>
+            )}
+          </div>
+
+          {/* Add new */}
+          <div className="mt-4 pt-4 border-t border-[var(--c-border)] space-y-3">
+            <div className="grid grid-cols-[2fr_1fr] gap-3">
+              <SpecialInput label="Title" value={draft.title} onChange={v => setDraft({ ...draft, title: v })} placeholder="e.g. The Republic" accentColor="var(--disco-accent-orange)" />
+              <SpecialInput label="Date" value={draft.date} onChange={v => setDraft({ ...draft, date: v })} placeholder="e.g. 375 BCE" accentColor="var(--c-muted)" />
+            </div>
+            <SpecialInput label="Impact" value={draft.impact} onChange={v => setDraft({ ...draft, impact: v })} placeholder="What was its significance?" accentColor="var(--c-muted)" />
+            <button type="button" onClick={addEntry} className="btn-action text-[var(--disco-accent-orange)] border-[var(--disco-accent-orange)]/40 hover:border-[var(--disco-accent-orange)]">+ Add Contribution</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   7. INSTITUTIONAL POWER BASE
+   ───────────────────────────────────────────── */
+
+export interface InstitutionalState {
+  fundingModel: string;
+  institutionalProduct: string;
+  successionPlan: string;
+}
+
+interface InstitutionalFieldProps {
+  value: InstitutionalState;
+  onChange: (v: InstitutionalState) => void;
+}
+
+export function InstitutionalField({ value, onChange }: InstitutionalFieldProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div>
+      <SectionDivider label="Institutional Power Base" color="var(--disco-accent-yellow)" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+
+      {!collapsed && (
+        <div className="special-section" style={{ "--section-accent": "var(--disco-accent-yellow)" } as React.CSSProperties}>
+          {/* Primary institution placeholder — entity ref */}
+          <div className="mb-6 p-4 border border-dashed border-[var(--c-border)] opacity-50">
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--c-ghost)]">
+              ◇ Primary Institution — entity linking (coming soon)
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            <div className="special-section__card">
+              <div className="special-section__card-marker" style={{ backgroundColor: "var(--disco-accent-yellow)" }} />
+              <SpecialTextArea
+                label="Funding Model"
+                value={value.fundingModel}
+                onChange={v => onChange({ ...value, fundingModel: v })}
+                placeholder="How did they sustain their work? Royal patronage, self-funded, crowdfunding..."
+                rows={2}
+                accentColor="var(--disco-accent-yellow)"
+              />
+            </div>
+
+            <div className="special-section__card">
+              <div className="special-section__card-marker" style={{ backgroundColor: "var(--disco-accent-teal)" }} />
+              <SpecialTextArea
+                label="Institutional Product"
+                value={value.institutionalProduct}
+                onChange={v => onChange({ ...value, institutionalProduct: v })}
+                placeholder="What did they produce within the institution? Laws, theories, art..."
+                rows={2}
+                accentColor="var(--disco-accent-teal)"
+              />
+            </div>
+
+            <div className="special-section__card">
+              <div className="special-section__card-marker" style={{ backgroundColor: "var(--disco-accent-purple)" }} />
+              <SpecialTextArea
+                label="Succession Plan"
+                value={value.successionPlan}
+                onChange={v => onChange({ ...value, successionPlan: v })}
+                placeholder="Who took over after them? What was the transition of power?"
+                rows={2}
+                accentColor="var(--disco-accent-purple)"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

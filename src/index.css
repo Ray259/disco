@@ -295,3 +295,78 @@ input, button, select, textarea {
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Terminology */
+.terminology-entry {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.terminology-entry__term {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #06b6d4;
+  white-space: nowrap;
+}
+
+.terminology-entry__def {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--disco-text-secondary);
+}
+
+.terminology-entry__remove {
+  font-size: 10px;
+  color: var(--c-ghost);
+  transition: color 0.15s;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.terminology-entry__remove:hover { color: #ef4444; }
+
+/* Contributions Timeline */
+.contributions-timeline {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.contributions-timeline::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--c-border);
+}
+
+.contributions-entry {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.contributions-entry__marker {
+  position: absolute;
+  left: -1.25rem;
+  top: 0.65rem;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--disco-accent-orange);
+  box-shadow: 0 0 6px rgba(217, 79, 4, 0.4);
+}
+
+.contributions-entry__content {
+  flex: 1;
+}
+

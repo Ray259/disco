@@ -13,21 +13,35 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
+type Precision = "day" | "month" | "year";
+
+function detectPrecision(value: string): Precision {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return "day";
+  if (/^\d{4}-\d{2}$/.test(value)) return "month";
+  return "year";
+}
+
 function parseDate(value: string): { year: number; month: number; day: number } | null {
-  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return { year: parseInt(m[1]), month: parseInt(m[2]) - 1, day: parseInt(m[3]) };
+  const full = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (full) return { year: +full[1], month: +full[2] - 1, day: +full[3] };
+  const ym = value.match(/^(\d{4})-(\d{2})$/);
+  if (ym) return { year: +ym[1], month: +ym[2] - 1, day: 1 };
+  const y = value.match(/^(\d{4})$/);
+  if (y) return { year: +y[1], month: 0, day: 1 };
+  return null;
 }
 
 function formatDate(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-export function DatePicker({ value, onChange, placeholder = "YYYY-MM-DD", color = "var(--disco-accent-yellow)" }: DatePickerProps) {
+
+export function DatePicker({ value, onChange, placeholder = "YYYY / YYYY-MM / YYYY-MM-DD", color = "var(--disco-accent-yellow)" }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const parsed = parseDate(value);
+  const precision = value ? detectPrecision(value) : null;
   const today = new Date();
   const [viewYear, setViewYear] = useState(parsed?.year ?? today.getFullYear());
   const [viewMonth, setViewMonth] = useState(parsed?.month ?? today.getMonth());
@@ -63,24 +77,37 @@ export function DatePicker({ value, onChange, placeholder = "YYYY-MM-DD", color 
     setOpen(false);
   };
 
+  // Clicking the month header when precision is month/year selects month-level
+  const selectMonth = () => {
+    onChange(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`);
+    setOpen(false);
+  };
+
   const isSelected = (day: number) =>
     parsed?.year === viewYear && parsed?.month === viewMonth && parsed?.day === day;
 
+  const PRECISION_LABEL: Record<string, string> = { day: "DAY", month: "MONTH", year: "YEAR" };
+
   return (
     <div className="relative" ref={ref}>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        onClick={() => setOpen(true)}
-        placeholder={placeholder}
-        className="w-full bg-[var(--c-dark)] border border-[var(--c-border)] p-3 text-center text-xl font-mono outline-none hover:border-[var(--c-border-light)] focus:border-[var(--disco-accent-orange)] transition-colors"
-        style={{ color: value ? color : "var(--c-ghost)" }}
-      />
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          placeholder={placeholder}
+          className="w-full bg-[var(--c-dark)] border border-[var(--c-border)] p-3 text-center text-xl font-mono outline-none hover:border-[var(--c-border-light)] focus:border-[var(--disco-accent-orange)] transition-colors"
+          style={{ color: value ? color : "var(--c-ghost)" }}
+        />
+        {precision && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono uppercase tracking-widest opacity-50"
+            style={{ color }}>
+            {PRECISION_LABEL[precision]}
+          </span>
+        )}
+      </div>
 
       {open && (
         <div className="absolute z-50 mt-1 w-[280px] left-1/2 -translate-x-1/2 bg-[var(--c-dark)] border border-[var(--c-border)] shadow-2xl">
@@ -90,23 +117,23 @@ export function DatePicker({ value, onChange, placeholder = "YYYY-MM-DD", color 
               className="text-[var(--c-dim)] hover:text-white text-xs font-mono px-1 transition-colors">‹‹</button>
             <button type="button" onClick={prevMonth}
               className="text-[var(--c-dim)] hover:text-white text-sm font-mono px-1 transition-colors">‹</button>
-            <span className="text-sm font-mono tracking-widest text-white uppercase">
+            {/* Click month label to select month precision */}
+            <button type="button" onClick={selectMonth}
+              className="text-sm font-mono tracking-widest text-white uppercase hover:opacity-70 transition-opacity">
               {MONTHS[viewMonth]} {viewYear}
-            </span>
+            </button>
             <button type="button" onClick={nextMonth}
               className="text-[var(--c-dim)] hover:text-white text-sm font-mono px-1 transition-colors">›</button>
             <button type="button" onClick={() => setViewYear(viewYear + 1)}
               className="text-[var(--c-dim)] hover:text-white text-xs font-mono px-1 transition-colors">››</button>
           </div>
 
-          {/* Day labels */}
+          {/* Day grid — only shown for full-date selection */}
           <div className="grid grid-cols-7 px-2 pt-2">
             {["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map(d => (
               <div key={d} className="text-center text-[9px] font-mono text-[var(--c-faint)] pb-1">{d}</div>
             ))}
           </div>
-
-          {/* Days grid */}
           <div className="grid grid-cols-7 px-2 pb-2 gap-[1px]">
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
             {Array.from({ length: days }, (_, i) => i + 1).map(day => (
