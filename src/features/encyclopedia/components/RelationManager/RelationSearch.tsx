@@ -3,14 +3,20 @@ import { searchEntities, SearchResult } from '../../api';
 
 interface RelationSearchProps {
   onSelect: (entity: SearchResult) => void;
-  /** When set, only results of this entity_type are shown (e.g. "Geo"). Defaults to all types. */
+  /** Filter results to a specific entity_type */
   entityType?: string;
+  /** Show "+ Create" option when no exact match. Caller handles creation via onCreate. */
+  allowCreate?: boolean;
+  /** Caller-owned creation callback — receives the typed name, must handle entity creation */
+  onCreate?: (name: string) => void;
+  /** Custom label for the create button */
+  onCreateLabel?: string;
   label?: string;
   placeholder?: string;
 }
 
 export function RelationSearch({
-  onSelect, entityType,
+  onSelect, entityType, allowCreate, onCreate, onCreateLabel,
   label = "Add Relation", placeholder = "Search for an entity...",
 }: RelationSearchProps) {
   const [query, setQuery] = useState('');
@@ -39,6 +45,9 @@ export function RelationSearch({
     return () => clearTimeout(timer);
   }, [query]);
 
+  const exactMatch = filtered.some(r => r.name.toLowerCase() === query.trim().toLowerCase());
+  const showCreate = allowCreate && onCreate && query.trim().length >= 2 && !loading && !exactMatch;
+
   return (
     <div className="relative">
       <label className="block text-sm font-bold uppercase mb-1">{label}</label>
@@ -52,7 +61,7 @@ export function RelationSearch({
 
       {loading && <div className="absolute top-10 right-2 text-xs text-[var(--c-ghost)]">Scanning...</div>}
 
-      {filtered.length > 0 && (
+      {(filtered.length > 0 || showCreate) && (
         <ul className="absolute z-10 w-full bg-[var(--c-panel)] border-2 border-[var(--c-border)] mt-1 max-h-48 overflow-y-auto shadow-lg">
           {filtered.map((r) => (
             <li
@@ -64,6 +73,17 @@ export function RelationSearch({
               <span className="text-xs uppercase bg-[var(--c-deep)] px-1">{r.entity_type}</span>
             </li>
           ))}
+          {showCreate && (
+            <li
+              className="p-2 hover:bg-[var(--c-deep)] cursor-pointer flex justify-between items-center text-[var(--disco-accent-yellow)]"
+              onClick={() => { onCreate!(query.trim()); setQuery(''); setResults([]); }}
+            >
+              <span className="text-sm font-body italic">
+                {onCreateLabel || `+ Create "${query.trim()}"`}
+              </span>
+              <span className="text-xs uppercase bg-[var(--c-deep)] px-1">new</span>
+            </li>
+          )}
         </ul>
       )}
     </div>

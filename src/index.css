@@ -370,3 +370,135 @@ input, button, select, textarea {
   flex: 1;
 }
 
+/* ─── Rich Content Display (read-only entity refs) ─── */
+
+.rich-entity-ref {
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+  transition: border-color 0.15s, filter 0.15s;
+}
+
+.rich-entity-ref:hover {
+  border-bottom-color: currentColor;
+  filter: brightness(1.3);
+}
+
+/* ─── Rich Content Editor ─── */
+
+.rich-editor-wrapper {
+  position: relative;
+}
+
+.rich-editor {
+  width: 100%;
+  min-height: 2.5rem;
+  background: transparent;
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.5rem 0;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: #ccc;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  transition: border-color 0.2s;
+}
+
+.rich-editor:focus {
+  border-bottom-color: var(--disco-accent-teal);
+}
+
+.rich-editor--multiline {
+  min-height: 6rem;
+  background: #181818;
+  border: 1px solid var(--c-border);
+  padding: 1rem;
+}
+
+.rich-editor--multiline:focus {
+  border-color: var(--disco-accent-teal);
+}
+
+.rich-editor__placeholder {
+  position: absolute;
+  top: 0.5rem;
+  left: 0;
+  pointer-events: none;
+  color: var(--c-ghost);
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.rich-editor--multiline + .rich-editor__popup,
+.rich-editor--multiline ~ .rich-editor__placeholder {
+  left: 1rem;
+  top: 1rem;
+}
+
+.rich-editor__chip {
+  display: inline;
+  color: #818cf8;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+
+.rich-editor__chip:hover {
+  opacity: 0.8;
+}
+
+.rich-editor__popup {
+  position: absolute;
+  z-index: 50;
+  width: 280px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--c-panel);
+  border: 2px solid var(--c-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.rich-editor__popup-loading {
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--c-ghost);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rich-editor__popup-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--c-border);
+  transition: background 0.1s;
+}
+
+.rich-editor__popup-item:last-child {
+  border-bottom: none;
+}
+
+.rich-editor__popup-item:hover,
+.rich-editor__popup-item--selected {
+  background: var(--c-deep);
+}
+
+.rich-editor__popup-name {
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.rich-editor__popup-type {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--c-deep);
+  padding: 0.1rem 0.35rem;
+  color: var(--c-dim);
+}

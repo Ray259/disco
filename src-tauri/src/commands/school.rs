@@ -1,5 +1,4 @@
 use tauri::State;
-use uuid::Uuid;
 use crate::core::db::EncyclopediaDb;
 use crate::core::vault::VaultManager;
 use crate::core::domain::models::school_of_thought::SchoolOfThought;
@@ -7,92 +6,48 @@ use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::traits::InputDto;
 use serde::Deserialize;
-use super::RelationDto;
 use super::common::{handle_create, handle_update};
 
-/// DTO for creating a new School of Thought.
 #[derive(Deserialize)]
 pub struct CreateSchoolOfThoughtRequest {
     pub name: String,
-    pub description: Option<String>,
-    pub relations: Option<Vec<crate::commands::RelationDto>>,
+    pub description: Option<RichContent>,
 }
 
 impl InputDto<SchoolOfThought> for CreateSchoolOfThoughtRequest {
-    fn to_entity(&self, id: Uuid) -> Result<SchoolOfThought, String> {
-        let mut school = SchoolOfThought::new(id, self.name.clone());
-
-        if let Some(desc) = &self.description {
-            if !desc.is_empty() {
-                school = school.with_description(RichContent::from_text(desc));
-            }
-        }
-        Ok(school)
+    fn to_entity(&self) -> Result<SchoolOfThought, String> {
+        let mut s = SchoolOfThought::new(self.name.clone());
+        if let Some(d) = &self.description { if !d.is_empty() { s.description = Some(d.clone()); } }
+        Ok(s)
     }
 
-    fn update_entity(&self, school: &mut SchoolOfThought) -> Result<(), String> {
-        school.name = self.name.clone();
-
-        if let Some(desc) = &self.description {
-            if !desc.is_empty() {
-                school.description = Some(RichContent::from_text(desc));
-            } else {
-                school.description = None;
-            }
-        } else {
-            school.description = None;
-        }
+    fn update_entity(&self, s: &mut SchoolOfThought) -> Result<(), String> {
+        s.name = self.name.clone();
+        s.description = self.description.as_ref().filter(|d| !d.is_empty()).cloned();
         Ok(())
     }
-
-    fn get_relations(&self) -> Option<Vec<RelationDto>> {
-        let rels = self.relations.as_ref()?;
-        Some(rels.iter().map(|r| RelationDto {
-            target_id: r.target_id,
-            relation_type: r.relation_type.clone()
-        }).collect())
-    }
 }
 
-/// Retrieves all entities with type `SchoolOfThought`.
 #[tauri::command]
 pub async fn get_all_schools_of_thought(state: State<'_, EncyclopediaDb>) -> Result<Vec<SchoolOfThought>, String> {
-    let entities = state.list_entities(Some(EntityType::SchoolOfThought))
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let items: Result<Vec<SchoolOfThought>, String> = entities.into_iter()
-        .map(|(id, _name, data)| {
-             let mut entity: SchoolOfThought = serde_json::from_str(&data).map_err(|e| e.to_string())?;
-             entity.id = id;
-             Ok(entity)
-        })
-        .collect();
-
-    items
+    let rows = state.list_entities(Some(EntityType::SchoolOfThought)).await.map_err(|e| e.to_string())?;
+    rows.into_iter().map(|(_name, data)| serde_json::from_str(&data).map_err(|e| e.to_string())).collect()
 }
 
-/// Retrieves a single SchoolOfThought by ID.
 #[tauri::command]
-pub async fn get_school_of_thought(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Option<SchoolOfThought>, String> {
-    let result = state.get_entity(id).await.map_err(|e| e.to_string())?;
-    match result {
-        Some((_type_str, _name, data)) => {
-            let mut entity: SchoolOfThought = serde_json::from_str(&data).map_err(|e| e.to_string())?;
-            entity.id = id;
-            Ok(Some(entity))
-        },
-        None => Ok(None)
+pub async fn get_school_of_thought(state: State<'_, EncyclopediaDb>, name: String) -> Result<Option<SchoolOfThought>, String> {
+    match state.get_entity(EntityType::SchoolOfThought, &name).await.map_err(|e| e.to_string())? {
+        Some(data) => serde_json::from_str(&data).map(Some).map_err(|e| e.to_string()),
+        None => Ok(None),
     }
 }
 
-/// Creates a new School of Thought and persists it.
 #[tauri::command]
 pub async fn create_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
     handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, id: Uuid, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
-    handle_update(state, vault, id, request).await
+pub async fn update_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, name: String, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
+    handle_update(state, vault, EntityType::SchoolOfThought, name, request).await
 }

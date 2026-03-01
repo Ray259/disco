@@ -1,5 +1,4 @@
 use tauri::State;
-use uuid::Uuid;
 use crate::core::db::EncyclopediaDb;
 use crate::core::vault::VaultManager;
 use crate::core::domain::models::institution::Institution;
@@ -8,119 +7,66 @@ use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::traits::InputDto;
 use serde::Deserialize;
-use chrono::NaiveDate;
-use super::RelationDto;
 use super::common::{handle_create, handle_update, parse_flexible_date};
 
-/// DTO for creating a new Institution.
 #[derive(Deserialize)]
 pub struct CreateInstitutionRequest {
     pub name: String,
     pub founded_start: Option<String>,
     pub founded_end: Option<String>,
-    pub description: Option<String>,
-    pub relations: Option<Vec<crate::commands::RelationDto>>,
+    pub description: Option<RichContent>,
 }
 
 impl InputDto<Institution> for CreateInstitutionRequest {
-    fn to_entity(&self, id: Uuid) -> Result<Institution, String> {
-        let mut institution = Institution::new(id, self.name.clone());
-
-        if let Some(desc) = &self.description {
-            if !desc.is_empty() {
-                institution = institution.with_description(RichContent::from_text(desc));
+    fn to_entity(&self) -> Result<Institution, String> {
+        let mut inst = Institution::new(self.name.clone());
+        if let (Some(s), Some(e)) = (&self.founded_start, &self.founded_end) {
+            if !s.is_empty() && !e.is_empty() {
+                inst.founded = Some(DateRange {
+                    start: parse_flexible_date(s, "founded_start")?,
+                    end: parse_flexible_date(e, "founded_end")?,
+                });
             }
         }
-
-        if let (Some(start), Some(end)) = (&self.founded_start, &self.founded_end) {
-            if !start.is_empty() && !end.is_empty() {
-                 let s = parse_flexible_date(start, "founded start")?;
-                 let e = parse_flexible_date(end, "founded end")?;
-                 
-                 institution.founded = Some(DateRange::new(s, e));
-            }
-        }
-        
-        Ok(institution)
+        if let Some(d) = &self.description { if !d.is_empty() { inst.description = Some(d.clone()); } }
+        Ok(inst)
     }
 
-    fn update_entity(&self, institution: &mut Institution) -> Result<(), String> {
-        institution.name = self.name.clone();
-        
-        if let Some(desc) = &self.description {
-            if !desc.is_empty() {
-                institution.description = Some(RichContent::from_text(desc));
-            } else {
-                institution.description = None;
+    fn update_entity(&self, inst: &mut Institution) -> Result<(), String> {
+        inst.name = self.name.clone();
+        if let (Some(s), Some(e)) = (&self.founded_start, &self.founded_end) {
+            if !s.is_empty() && !e.is_empty() {
+                inst.founded = Some(DateRange {
+                    start: parse_flexible_date(s, "founded_start")?,
+                    end: parse_flexible_date(e, "founded_end")?,
+                });
             }
-        } else {
-            institution.description = None;
         }
-    
-        if let (Some(start), Some(end)) = (&self.founded_start, &self.founded_end) {
-            if !start.is_empty() && !end.is_empty() {
-                 let s = parse_flexible_date(start, "founded start")?;
-                 let e = parse_flexible_date(end, "founded end")?;
-                 
-                 institution.founded = Some(DateRange::new(s, e));
-            } else {
-                institution.founded = None;
-            }
-        } else {
-            institution.founded = None;
-        }
-
+        inst.description = self.description.as_ref().filter(|d| !d.is_empty()).cloned();
         Ok(())
     }
-
-    fn get_relations(&self) -> Option<Vec<RelationDto>> {
-        let rels = self.relations.as_ref()?;
-        Some(rels.iter().map(|r| RelationDto {
-            target_id: r.target_id,
-            relation_type: r.relation_type.clone()
-        }).collect())
-    }
 }
 
-/// Retrieves all entities with type `Institution`.
 #[tauri::command]
 pub async fn get_all_institutions(state: State<'_, EncyclopediaDb>) -> Result<Vec<Institution>, String> {
-    let entities = state.list_entities(Some(EntityType::Institution))
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let items: Result<Vec<Institution>, String> = entities.into_iter()
-        .map(|(id, _name, data)| {
-             let mut entity: Institution = serde_json::from_str(&data).map_err(|e| e.to_string())?;
-             entity.id = id;
-             Ok(entity)
-        })
-        .collect();
-
-    items
+    let rows = state.list_entities(Some(EntityType::Institution)).await.map_err(|e| e.to_string())?;
+    rows.into_iter().map(|(_name, data)| serde_json::from_str(&data).map_err(|e| e.to_string())).collect()
 }
 
-/// Retrieves a single Institution by ID.
 #[tauri::command]
-pub async fn get_institution(state: State<'_, EncyclopediaDb>, id: Uuid) -> Result<Option<Institution>, String> {
-    let result = state.get_entity(id).await.map_err(|e| e.to_string())?;
-    match result {
-        Some((_type_str, _name, data)) => {
-            let mut entity: Institution = serde_json::from_str(&data).map_err(|e| e.to_string())?;
-            entity.id = id;
-            Ok(Some(entity))
-        },
-        None => Ok(None)
+pub async fn get_institution(state: State<'_, EncyclopediaDb>, name: String) -> Result<Option<Institution>, String> {
+    match state.get_entity(EntityType::Institution, &name).await.map_err(|e| e.to_string())? {
+        Some(data) => serde_json::from_str(&data).map(Some).map_err(|e| e.to_string()),
+        None => Ok(None),
     }
 }
 
-/// Creates a new Institution and persists it.
 #[tauri::command]
 pub async fn create_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateInstitutionRequest) -> Result<String, String> {
     handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, id: Uuid, request: CreateInstitutionRequest) -> Result<String, String> {
-    handle_update(state, vault, id, request).await
+pub async fn update_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, name: String, request: CreateInstitutionRequest) -> Result<String, String> {
+    handle_update(state, vault, EntityType::Institution, name, request).await
 }

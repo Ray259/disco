@@ -44,7 +44,8 @@ export function FormLayout({
       
       {children}
 
-      <div className="flex justify-between items-center pt-8 border-t border-[var(--c-deep)]">
+      <div className="sticky bottom-0 z-10 bg-[var(--c-dark)]/95 backdrop-blur-sm pt-6 pb-2 -mx-10 px-10 border-t border-[var(--c-deep)]">
+        <div className="flex justify-between items-center">
          <button
            type="button"
            onClick={onCancel}
@@ -61,6 +62,7 @@ export function FormLayout({
          >
             {loading ? "PROCESSING..." : submitLabel}
          </button>
+        </div>
       </div>
     </form>
   );

@@ -9,7 +9,6 @@ mod commands;
 use std::sync::Arc;
 use std::path::PathBuf;
 use tauri::Manager;
-use tauri::State;
 use crate::core::db::EncyclopediaDb;
 use crate::core::vault::VaultManager;
 use crate::core::watcher;

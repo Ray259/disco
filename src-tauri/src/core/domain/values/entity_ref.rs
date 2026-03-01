@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EntityType {
@@ -19,7 +18,33 @@ impl std::fmt::Display for EntityType {
             EntityType::Event => write!(f, "Event"),
             EntityType::Geo => write!(f, "Geo"),
             EntityType::Institution => write!(f, "Institution"),
-            EntityType::SchoolOfThought => write!(f, "School of Thought"),
+            EntityType::SchoolOfThought => write!(f, "SchoolOfThought"),
+        }
+    }
+}
+
+impl EntityType {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "Figure" | "Figures" => Some(EntityType::Figure),
+            "Work" | "Works" => Some(EntityType::Work),
+            "Event" | "Events" => Some(EntityType::Event),
+            "Geo" | "Geos" => Some(EntityType::Geo),
+            "Institution" | "Institutions" => Some(EntityType::Institution),
+            "SchoolOfThought" | "SchoolsOfThought" | "School of Thought" => Some(EntityType::SchoolOfThought),
+            _ => None,
+        }
+    }
+
+    /// Returns the vault subdirectory name for this type.
+    pub fn dir_name(&self) -> &'static str {
+        match self {
+            EntityType::Figure => "Figures",
+            EntityType::Work => "Works",
+            EntityType::Event => "Events",
+            EntityType::Geo => "Geos",
+            EntityType::Institution => "Institutions",
+            EntityType::SchoolOfThought => "SchoolsOfThought",
         }
     }
 }
@@ -27,32 +52,18 @@ impl std::fmt::Display for EntityType {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EntityRef {
     pub entity_type: EntityType,
-    pub entity_id: Uuid,
     pub display_text: String,
 }
 
 impl EntityRef {
-    pub fn new(entity_type: EntityType, entity_id: Uuid, display_text: String) -> Self {
-        Self { entity_type, entity_id, display_text }
+    pub fn new(entity_type: EntityType, display_text: String) -> Self {
+        Self { entity_type, display_text }
     }
 
-    pub fn figure(id: Uuid, display_text: String) -> Self {
-        Self::new(EntityType::Figure, id, display_text)
-    }
-
-    pub fn work(id: Uuid, display_text: String) -> Self {
-        Self::new(EntityType::Work, id, display_text)
-    }
-
-    pub fn event(id: Uuid, display_text: String) -> Self {
-        Self::new(EntityType::Event, id, display_text)
-    }
-
-    pub fn geo(id: Uuid, display_text: String) -> Self {
-        Self::new(EntityType::Geo, id, display_text)
-    }
-
-    pub fn institution(id: Uuid, display_text: String) -> Self {
-        Self::new(EntityType::Institution, id, display_text)
-    }
+    pub fn figure(name: String) -> Self { Self::new(EntityType::Figure, name) }
+    pub fn work(name: String) -> Self { Self::new(EntityType::Work, name) }
+    pub fn event(name: String) -> Self { Self::new(EntityType::Event, name) }
+    pub fn geo(name: String) -> Self { Self::new(EntityType::Geo, name) }
+    pub fn institution(name: String) -> Self { Self::new(EntityType::Institution, name) }
+    pub fn school(name: String) -> Self { Self::new(EntityType::SchoolOfThought, name) }
 }

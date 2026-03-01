@@ -1,80 +1,129 @@
 # Frontend Component Reference
 
-> **Scope**: `src/features/encyclopedia`
-
-This document details every React component, its props, state, and rendering logic.
+> **Scope**: `src/features/encyclopedia` and `src/components`
 
 ## 1. Core Components
 
 ### `EntityCreate.tsx`
-**Role**: The Page Controller for the creation route.
-*   **Config**: Imports `ENTITY_CONFIG` to know which entities exist.
-*   **State**: `activeTab` (defaults to first key in config).
-*   **Logic**:
-    *   Renders a dynamically generated Tab Bar.
-    *   Renders the specific Form Component from config (e.g. `<FigureForm />`).
-    *   Passes `extraRelations` (mocked for now) to forms.
+Page controller for create/edit. Driven by `ENTITY_CONFIG` — maps entity types to form components.
+- `activeKey`: current entity tab
+- Passes `extraRelations`, `initialValues`, `editId` to form components
+- Renders `RelationManager` below the form
 
 ### `GenericEntityList.tsx`
-**Role**: A reusable list view for ANY entity type.
-*   **Props**:
-    *   `title`: String.
-    *   `fetcher`: Async function returning `T[]`.
-    *   `renderItem`: Function returning ReactNode for a `T`.
-*   **Logic**:
-    *   Fetches data on mount using `fetcher`.
-    *   Renders each item using `renderItem`.
-    *   Handles Loading/Error states uniformly.
+Reusable list view for any entity type. Props: `title`, `fetcher`, `renderItem`.
 
 ### `FigureDetail.tsx`
-**Role**: The View Page for a single figure.
-*   **Params**: `id` (from URL).
-*   **State**: `figure` (Figure | null).
-*   **Render**:
-    *   Displays full details including `RichContentDisplay` components for bio/quotes.
-    *   **Missing**: Currently specific to Figures. Needs to be generalized or replicated for other entities.
+View page for a single Figure. Uses `RichContentDisplay` for text fields.
 
 ### `RichContentDisplay.tsx`
-**Role**: The "Markdown Renderer" of our system.
-*   **Props**: `{ content: RichContent }`.
-*   **Logic**:
-    *   Checks `content.segments`.
-    *   Iterates and discriminates based on key (`Text` vs `EntityRef` vs `DateRef`).
-    *   `EntityRef` segments are wrapped in React Router `Link`.
+Renders `RichContent` segments — discriminates `Text` | `EntityRef` | `DateRef`. EntityRef renders as a `Link`.
 
 ---
 
-## 2. Forms (`components/forms/*`)
+## 2. Shared Form Components (`forms/SharedFormComponents.tsx`)
 
-All forms now use **`SharedFormComponents`** for layout and consistent styling.
+### `FormLayout`
+Common form wrapper. Handles error display, submit/cancel buttons.
+- **Sticky buttons**: Internalize/Discard bar is `sticky bottom-0` with backdrop blur — floats at viewport bottom when scrolled past.
 
-*   **`SharedFormComponents.tsx`**:
-    *   `FormLayout`: The common wrapper.
-    *   `FormInput`, `FormTextArea`: Styled inputs.
-    *   `TemporalCoordinates`: The "start-end" date block.
+### `FormInput` / `FormTextArea`
+Styled inputs with label. Accept standard HTML input props.
 
-### Specific Forms
-Each form (`FigureForm`, `InstitutionForm`, etc.) is now a thin wrapper that:
-1.  Defines local state for specific fields.
-2.  Calls the specific API creator (e.g. `createFigure`).
-3.   renders `<FormLayout>` containing `<FormInput>`s.
-
-*   **`FigureForm`**: Adds `TemporalCoordinates` for life span.
-*   **`InstitutionForm`**: Adds `TemporalCoordinates` for founding dates.
-*   **`EventForm`**: Adds `TemporalCoordinates` for event duration.
-*   **`GeoForm`**: Standard fields.
-*   **`WorkForm`**: Uses a custom date input for Publication Date.
-*   **`SchoolForm`**: Standard fields.
+### `TemporalCoordinates`
+Start/end date picker block using `DatePicker`.
 
 ---
 
-## 3. API Layer (`api/index.ts`)
+## 3. DatePicker (`components/DatePicker.tsx`)
 
-Pure TypeScript functions. No state.
-*   Each function explicitly types its argument to match the Backend `Deserialize` struct.
-*   Each function explicitly types its return Promise to match Backend `Serialize` struct.
+### Flexible date input
+Accepts three formats:
+- `YYYY` — year only (precision badge: YEAR)
+- `YYYY-MM` — year-month (precision badge: MONTH)
+- `YYYY-MM-DD` — full date (precision badge: DAY)
 
-**Data Types**:
-*   `RichContent`: `{ segments: [...] }`
-*   `EntityRef`: `{ entity_type, entity_id, display_text }`
-*   `DateRange`: `{ start, end }`
+### Calendar interactions
+- Click a day → sets YYYY-MM-DD
+- Click the month header (e.g. "MAR 2025") → sets YYYY-MM
+- Type directly in the text input for any format
+
+---
+
+## 4. RelationSearch (`RelationManager/RelationSearch.tsx`)
+
+Generic entity search/select component. No domain logic.
+
+### Props
+| Prop | Type | Description |
+|------|------|-------------|
+| `onSelect` | `(entity: SearchResult) => void` | Called when user clicks a result |
+| `entityType?` | `string` | Client-side filter (e.g. `"Geo"`) |
+| `allowCreate?` | `boolean` | Show "+ Create" option when no exact match |
+| `onCreate?` | `(name: string) => void` | Caller-owned creation callback |
+| `onCreateLabel?` | `string` | Custom label for create button |
+| `label?` | `string` | Input label |
+| `placeholder?` | `string` | Input placeholder |
+
+Search triggers at 2+ characters with 300ms debounce via `searchEntities` API.
+
+---
+
+## 5. FigureForm (`forms/FigureForm.tsx`)
+
+### Form state
+Uses `useFormState` hook (reducer-based). Fields: `name`, `role`, `location`, `quote`, `startYear`, `endYear`, plus 7 special field states.
+
+### GeoPickerField (local component)
+Handles the origin/location field. Two states:
+- **Empty**: Shows `RelationSearch` filtered to Geo entities with `allowCreate`. When "+ Create" is clicked, calls `createGeo` API — onPick only fires on success.
+- **Filled**: Shows selected name with "change" button to clear.
+
+Stores `locationId` for future EntityRef wiring.
+
+### Special Fields (UI-only, not backend-wired)
+Defined in `forms/SpecialFields.tsx`:
+
+| Component | State Shape | UI Pattern |
+|-----------|------------|------------|
+| `ZeitgeistField` | `{ era, catalyst, opposition }` | Side-by-side cards |
+| `CoreIdeologyField` | `{ axiom, argumentFlow }` | Split panel |
+| `LineageField` | `{ predecessors[], rivals[], successors[] }` | 3-column chip inputs |
+| `LegacyField` | `{ shortTermSuccess, modernRelevance, criticalFlaw, personalSynthesis }` | 4-block grid |
+| `TerminologyField` | `{ entries: [{term, definition}] }` | Dynamic key-value list |
+| `ContributionsField` | `{ entries: [{year, contribution}] }` | Timeline with markers |
+| `InstitutionalField` | `{ fundingModel, institutionalProduct, successionPlan }` | 3-input panel |
+
+### Payload (current)
+Submit sends: `{ name, role, location, start_year, end_year, quote?, relations }`.
+Special fields are **not** included in the payload yet.
+
+---
+
+## 6. Other Forms
+
+All forms follow the same pattern: local state → API call on submit → `FormLayout` wrapper.
+
+- **EventForm**: `name`, `start_date`, `end_date`, `description`
+- **InstitutionForm**: `name`, `founded_start`, `founded_end`, `description`
+- **GeoForm**: `name`, `region`, `description`
+- **WorkForm**: `title`, `summary`
+- **SchoolForm**: `name`, `description`
+
+---
+
+## 7. API Layer (`api/index.ts`)
+
+Thin wrappers around Tauri `invoke`. Each function types its argument and return to match backend structs. Key types:
+- `SearchResult`: `{ id, name, entity_type, description? }`
+- `RichContent`: `{ segments: ContentSegment[] }`
+- `RelationDto`: `{ target_id: UUID, relation_type: string }`
+
+---
+
+## 8. Hooks
+
+### `useFormState<T>(initial)` (`hooks/useFormState.ts`)
+Reducer-based form state management. Returns `[state, setField, resetForm]`.
+- `setField(field, value)` — updates a single field
+- `resetForm(newState)` — replaces entire state

@@ -1,92 +1,37 @@
 import { useState, useEffect } from "react";
-import { createSchoolOfThought, updateSchoolOfThought, RelationDto } from "../../api";
-import { FormLayout, FormInput, FormTextArea } from "./SharedFormComponents";
+import { createSchoolOfThought, updateSchoolOfThought, ContentSegment } from "../../api";
+import { FormLayout, FormInput } from "./SharedFormComponents";
+import { RichContentEditor } from "../RichContentEditor";
+import { extractSegments } from "../RichContentEditorTypes";
 
-interface SchoolFormProps {
-  onSuccess: () => void;
-  onCancel: () => void;
-  extraRelations: RelationDto[];
-  initialValues?: any;
-  editId?: string;
-}
+interface Props { onSuccess: () => void; onCancel: () => void; initialValues?: any; editName?: string; }
 
-const getText = (content: any) => {
-    if (!content) return "";
-    if (typeof content === "string") return content;
-    if (content.segments && Array.isArray(content.segments)) {
-        return content.segments.map((s: any) => s.Text || "").join("");
-    }
-    return "";
-};
-
-export function SchoolForm({ onSuccess, onCancel, extraRelations, initialValues, editId }: SchoolFormProps) {
+export function SchoolForm({ onSuccess, onCancel, initialValues, editName }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState<ContentSegment[]>([]);
 
   useEffect(() => {
-    if (initialValues) {
-        setName(initialValues.name || "");
-        setDescription(getText(initialValues.description));
-    }
+    if (initialValues) { setName(initialValues.name || ""); setDescription(extractSegments(initialValues.description)); }
   }, [initialValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+    e.preventDefault(); setLoading(true); setError(null);
     try {
-      if (!name) throw new Error("Designation/Name is required.");
-
-      const payload = {
-        name,
-        description: description || undefined,
-        relations: extraRelations,
-      };
-
-      if (editId) {
-          await updateSchoolOfThought(editId, payload);
-      } else {
-          await createSchoolOfThought(payload);
-      }
-
-      setLoading(false);
+      if (!name) throw new Error("Name is required.");
+      const payload = { name, description: description.length > 0 ? { segments: description } : undefined };
+      if (editName) { await updateSchoolOfThought(editName, payload); } else { await createSchoolOfThought(payload); }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || String(err));
-      setLoading(false);
-    }
+    } catch (err: any) { setError(err.message || String(err)); }
+    finally { setLoading(false); }
   };
 
-  const currentColor = "#ef4444"; // Red-500
-
+  const c = "#ef4444";
   return (
-    <FormLayout 
-      onSubmit={handleSubmit} 
-      onCancel={onCancel} 
-      loading={loading} 
-      error={error} 
-      color={currentColor}
-      submitLabel={editId ? "Update School" : "Create School"}
-    >
-      <FormInput 
-        label="1. Designation" 
-        value={name} 
-        onChange={(e) => setName(e.target.value)} 
-        placeholder="ENTER IDEOLOGY..." 
-        color={currentColor}
-      />
-
-      <FormTextArea 
-        label="Description / Manifest" 
-        value={description} 
-        onChange={(e) => setDescription(e.target.value)} 
-        rows={6}
-        placeholder="Attributes..."
-      />
+    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "Update School" : "Create School"}>
+      <FormInput label="1. Designation" value={name} onChange={(e) => setName(e.target.value)} placeholder="ENTER IDEOLOGY..." color={c} />
+      <RichContentEditor label="Description / Manifest" value={description} onChange={setDescription} placeholder="Attributes..." multiline />
     </FormLayout>
   );
 }

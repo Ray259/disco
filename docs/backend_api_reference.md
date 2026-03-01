@@ -2,148 +2,135 @@
 
 > **Scope**: `src-tauri/src/commands` & `src-tauri/src/core`
 
-This document details every public command exposed to the frontend and the internal logic governing it.
+## Shared Utilities (`commands/common.rs`)
+
+### `parse_flexible_date(s, field) -> Result<NaiveDate, String>`
+Accepts three date formats:
+1. `YYYY-MM-DD` (full) → parsed directly
+2. `YYYY-MM` (month) → day defaults to 01
+3. `YYYY` (year) → month+day default to 01-01
+
+Used by all entity commands that accept date strings.
+
+### `handle_create<E, D>(state, vault, request) -> Result<String, String>`
+Generic create pipeline: DTO → Entity → serialize → SQLite insert → relation insert → vault markdown write.
+
+### `handle_update<E, D>(state, vault, id, request) -> Result<String, String>`
+Generic update pipeline: fetch → deserialize → apply DTO → serialize → SQLite update → rebuild relations → vault re-write.
+
+### `delete_entity(state, vault, id) -> Result<String, String>`
+Deletes entity from SQLite and removes vault markdown file.
+
+---
 
 ## 1. Figure Commands (`commands/figure.rs`)
 
-### `create_figure`
-*   **Signature**: `fn(state, request: CreateFigureRequest) -> Result<String, String>`
-*   **Input**:
-    ```rust
-    struct CreateFigureRequest {
-        name: String,
-        role: String,      // Converted to RichContent
-        location: String,  // Converted to RichContent
-        start_year: String,// Parsed as YYYY (defaulting to Jan 1)
-        end_year: String,  // Parsed as YYYY
-        quote: Option<String>
-    }
-    ```
-*   **Logic**:
-    1.  Generates new `Uuid::new_v4()`.
-    2.  Parses years into `NaiveDate` (Jan 1st).
-    3.  Constructs `Figure` struct.
-    4.  Serializes to JSON.
-    5.  Inserts into `entities` table with type `Figure`.
-*   **Error Handling**: Returns `Err` if date parsing fails or DB insert fails.
+### `create_figure(state, vault, request)`
+```rust
+struct CreateFigureRequest {
+    name: String,
+    role: String,        // → RichContent
+    location: String,    // → RichContent
+    start_year: String,  // flexible: YYYY, YYYY-MM, or YYYY-MM-DD
+    end_year: String,    // flexible
+    quote: Option<String>,
+    relations: Option<Vec<RelationDto>>,
+}
+```
+Delegates to `handle_create`.
 
-### `get_all_figures`
-*   **Signature**: `fn(state) -> Result<Vec<Figure>, String>`
-*   **Logic**:
-    1.  Calls `search_entities(EntityType::Figure)`.
-    2.  Deserializes every JSON blob returned.
-    3.  **Warning**: If any blob fails deserialization (e.g. schema change), this implementation currently propagates the error, potentially failing the whole list.
+### `update_figure(state, vault, id, request)`
+Same DTO. Delegates to `handle_update`.
 
-### `get_figure`
-*   **Input**: `id: Uuid`
-*   **Logic**: Fetches single row. Returns `Ok(None)` if not found.
+### `get_all_figures(state) -> Vec<Figure>`
+### `get_figure(state, id) -> Option<Figure>`
 
 ---
 
 ## 2. Institution Commands (`commands/institution.rs`)
 
-### `create_institution`
-*   **Input**:
-    ```rust
-    struct CreateInstitutionRequest {
-        name: String,
-        founded_start: Option<String>,
-        founded_end: Option<String>,
-        description: Option<String>
-    }
-    ```
-*   **Logic**:
-    *   Dates are optional here. simpler parsing logic than Figure.
-    *   Initializes empty vectors for `founders`, `products`, `relations`.
+### `create_institution` / `update_institution`
+```rust
+struct CreateInstitutionRequest {
+    name: String,
+    founded_start: Option<String>,  // flexible date
+    founded_end: Option<String>,    // flexible date
+    description: Option<String>,
+    relations: Option<Vec<RelationDto>>,
+}
+```
 
-### `get_all_institutions`
-*   **Signature**: `fn(state) -> Result<Vec<Institution>, String>`
-*   **Logic**: Fetches all entities where `entity_type = "Institution"`.
+### `get_all_institutions` / `get_institution`
 
 ---
 
 ## 3. Event Commands (`commands/event.rs`)
 
-### `create_event`
-*   **Input**:
-    ```rust
-    struct CreateEventRequest {
-        name: String,
-        start_date: String, // Required YYYY-MM-DD
-        end_date: String,   // Required YYYY-MM-DD
-        description: Option<String>
-    }
-    ```
-*   **Logic**:
-    *   Strict date parsing (`%Y-%m-%d`).
-    *   Converts dates to `DateRange`.
+### `create_event` / `update_event`
+```rust
+struct CreateEventRequest {
+    name: String,
+    start_date: String,     // flexible date
+    end_date: String,       // flexible date
+    description: Option<String>,
+    relations: Option<Vec<RelationDto>>,
+}
+```
 
-### `get_all_events`
-*   **Signature**: `fn(state) -> Result<Vec<Event>, String>`
-*   **Logic**: Fetches all entities where `entity_type = "Event"`.
+### `get_all_events` / `get_event`
 
 ---
 
 ## 4. Geo Commands (`commands/geo.rs`)
 
-### `create_geo`
-*   **Input**: `{ name, region?, description? }`
-*   **Logic**: Plain text fields converted to `RichContent`.
+### `create_geo` / `update_geo`
+Input: `{ name, region?, description?, relations? }`
 
-### `get_all_geos`
-*   **Signature**: `fn(state) -> Result<Vec<Geo>, String>`
-*   **Logic**: Fetches all entities where `entity_type = "Geo"`.
+### `get_all_geos` / `get_geo`
 
 ---
 
 ## 5. Work Commands (`commands/work.rs`)
 
-### `create_work`
-*   **Input**: `{ title, summary? }`
-*   **Logic**: `title` maps to `entities.name`.
+### `create_work` / `update_work`
+Input: `{ title, summary?, relations? }`
 
-### `get_all_works`
-*   **Signature**: `fn(state) -> Result<Vec<Work>, String>`
-*   **Logic**: Fetches all entities where `entity_type = "Work"`.
+### `get_all_works` / `get_work`
 
 ---
 
 ## 6. School of Thought Commands (`commands/school.rs`)
 
-### `create_school_of_thought`
-*   **Input**: `{ name, description? }`
-*   **Logic**:
-    *   Creates a new SchoolOfThought.
-    *   Initializes `sub_schools` as empty vector (future feature).
+### `create_school_of_thought` / `update_school_of_thought`
+Input: `{ name, description?, relations? }`
 
-### `get_all_schools_of_thought`
-*   **Signature**: `fn(state) -> Result<Vec<SchoolOfThought>, String>`
-*   **Logic**: Fetches all entities where `entity_type = "SchoolOfThought"`.
+### `get_all_schools_of_thought` / `get_school_of_thought`
 
 ---
 
-## 7. Value Objects & Logic (`core/core/domain/values`)
+## 7. Search (`commands/search.rs` or inline)
 
-### `RichContent`
-*   **File**: `rich_content.rs`
-*   **Purpose**: Stores text that can contain links.
-*   **Internal**: `Vec<ContentSegment>`.
-*   **Methods**:
-    *   `from_text(str)`: Creates a single-segment text block.
-    *   `push_entity_ref(ref)`: Appends a link.
+### `search_entities(query) -> Vec<SearchResult>`
+```rust
+struct SearchResult {
+    id: Uuid,
+    name: String,
+    entity_type: String,
+    description: Option<String>,
+}
+```
+SQL LIKE search across all entity types.
 
-### `DateRange`
-*   **File**: `date_range.rs`
-*   **Purpose**: Wrapper for `start` and `end` dates.
-*   **Methods**:
-    *   `contains(date)`: Returns true if date is within range.
-    *   `duration_days()`: Returns `end - start` in days.
+---
 
-### `Zeitgeist`
-*   **File**: `zeitgeist.rs`
-*   **Purpose**: Represents the "Spirit of the Age" for a Figure.
-*   **Fields**:
-    *   `era`: The governing time period (e.g. "The Thirties").
-    *   `catalyst`: What sparked this era.
-    *   `opposition`: What this era fought against.
-    *   `influences`: List of `EntityRef` pointers to people who defined this time.
+## Value Objects (`core/domain/values/`)
+
+### `RichContent` (`rich_content.rs`)
+`Vec<ContentSegment>` where segment is `Text(String)` | `EntityRef(EntityRef)` | `DateRef(DateRange)`.
+- `from_text(str)` — creates single Text segment (current default for all form inputs).
+
+### `DateRange` (`date_range.rs`)
+`{ start: NaiveDate, end: NaiveDate }`.
+
+### `Zeitgeist` (`zeitgeist.rs`)
+`{ era, catalyst, opposition, influences: Vec<EntityRef> }`.

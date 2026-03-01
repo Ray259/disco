@@ -1,113 +1,66 @@
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
-use uuid::Uuid;
 use crate::core::domain::values::entity_ref::EntityType;
 
-/// The primary database access layer for the Encyclopedia application.
-///
-/// This struct wraps a `sqlx::Pool<Sqlite>` and provides strongly-typed methods
-/// for interacting with the `entities` and `relations` tables. It handles:
-/// - Schema initialization
-/// - Entity persistence (as JSON blobs)
-/// - Relation graph management
-/// - Text-based search
 #[derive(Clone)]
 pub struct EncyclopediaDb {
     pub pool: Pool<Sqlite>,
 }
 
 impl EncyclopediaDb {
-    /// Initializes the database connection pool and ensures the schema exists.
-    ///
-    /// # Arguments
-    /// * `url` - The database connection string (e.g., `sqlite://encyclopedia.db`).
-    ///
-    /// # Returns
-    /// * `Result<Self, sqlx::Error>` - The initialized database instance or an error.
     pub async fn init(url: &str) -> Result<Self, sqlx::Error> {
-        // Ensure the file exists if using sqlite
-        // sqlx requires sqlite:// protocol
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect(url)
             .await?;
-            
         let db = Self { pool };
         db.init_schema().await?;
         Ok(db)
     }
 
-    /// Creates the `entities` and `relations` tables if they do not exist.
-    ///
-    /// The `entities` table stores the core domain objects as JSON blobs to allow
-    /// flexible schema evolution while maintaining a fixed relational structure for
-    /// basic metadata (ID, Type, Name).
-    ///
-    /// The `relations` table implements a graph structure allowing directed edges
-    /// between any two entities.
     async fn init_schema(&self) -> Result<(), sqlx::Error> {
         sqlx::query(
             "
             CREATE TABLE IF NOT EXISTS entities (
-                id TEXT PRIMARY KEY,
                 entity_type TEXT NOT NULL,
                 name TEXT NOT NULL,
                 data TEXT NOT NULL,
                 file_path TEXT,
                 created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (entity_type, name)
             );
 
-            CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);
             CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name);
 
             CREATE TABLE IF NOT EXISTS relations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                from_id TEXT NOT NULL,
-                to_id TEXT NOT NULL,
-                relation_type TEXT NOT NULL,
-                FOREIGN KEY (from_id) REFERENCES entities(id),
-                FOREIGN KEY (to_id) REFERENCES entities(id)
+                from_type TEXT NOT NULL,
+                from_name TEXT NOT NULL,
+                to_type TEXT NOT NULL,
+                to_name TEXT NOT NULL,
+                relation_type TEXT NOT NULL
             );
 
-            CREATE INDEX IF NOT EXISTS idx_relations_from ON relations(from_id);
-            CREATE INDEX IF NOT EXISTS idx_relations_to ON relations(to_id);
-            CREATE INDEX IF NOT EXISTS idx_relations_type ON relations(relation_type);
+            CREATE INDEX IF NOT EXISTS idx_relations_from ON relations(from_type, from_name);
+            CREATE INDEX IF NOT EXISTS idx_relations_to ON relations(to_type, to_name);
             "
         )
         .execute(&self.pool)
         .await?;
-
-        // Migration: add file_path column if it doesn't exist (for existing DBs)
-        let _ = sqlx::query("ALTER TABLE entities ADD COLUMN file_path TEXT")
-            .execute(&self.pool)
-            .await;
-
         Ok(())
     }
 
-    /// Empties the entire database by deleting all rows from entities and relations.
-    /// Used when switching vault directories to ensure 1 vault maps to 1 db.
     pub async fn empty_database(&self) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM relations").execute(&self.pool).await?;
         sqlx::query("DELETE FROM entities").execute(&self.pool).await?;
         Ok(())
     }
 
-    // Entity CRUD
-
-    /// Inserts a new entity into the database.
-    ///
-    /// # Arguments
-    /// * `id` - The unique UUID of the entity.
-    /// * `entity_type` - The domain type (Figure, Institution, etc.).
-    /// * `name` - The primary name of the entity (indexed for search).
-    /// * `data` - The serialized JSON representation of the full domain object.
-    pub async fn insert_entity(&self, id: Uuid, entity_type: EntityType, name: &str, data: &str) -> Result<(), sqlx::Error> {
+    pub async fn insert_entity(&self, entity_type: EntityType, name: &str, data: &str) -> Result<(), sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
-            "INSERT INTO entities (id, entity_type, name, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
+            "INSERT INTO entities (entity_type, name, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
         )
-        .bind(id.to_string())
         .bind(entity_type.to_string())
         .bind(name)
         .bind(data)
@@ -118,45 +71,25 @@ impl EncyclopediaDb {
         Ok(())
     }
 
-    pub async fn update_entity(&self, id: Uuid, name: &str, data: &str) -> Result<u64, sqlx::Error> {
+    pub async fn update_entity(&self, entity_type: EntityType, name: &str, data: &str) -> Result<u64, sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         let result = sqlx::query(
-            "UPDATE entities SET name = $1, data = $2, updated_at = $3 WHERE id = $4"
+            "UPDATE entities SET data = $1, updated_at = $2 WHERE entity_type = $3 AND name = $4"
         )
-        .bind(name)
         .bind(data)
         .bind(now)
-        .bind(id.to_string())
+        .bind(entity_type.to_string())
+        .bind(name)
         .execute(&self.pool)
         .await?;
-        
         Ok(result.rows_affected())
     }
 
-    pub async fn delete_entity(&self, id: Uuid) -> Result<u64, sqlx::Error> {
-        // Transaction manually or just sequential queries
-        // Delete relations first
-        sqlx::query("DELETE FROM relations WHERE from_id = $1 OR to_id = $1")
-            .bind(id.to_string())
-            .execute(&self.pool)
-            .await?;
-            
-        let result = sqlx::query("DELETE FROM entities WHERE id = $1")
-            .bind(id.to_string())
-            .execute(&self.pool)
-            .await?;
-            
-        Ok(result.rows_affected())
-    }
-
-    /// Upserts an entity — inserts or replaces based on UUID.
-    /// Used by the vault sync to update SQLite from markdown files.
-    pub async fn upsert_entity(&self, id: Uuid, entity_type: EntityType, name: &str, data: &str, file_path: &str) -> Result<(), sqlx::Error> {
+    pub async fn upsert_entity(&self, entity_type: EntityType, name: &str, data: &str, file_path: &str) -> Result<(), sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
-            "INSERT OR REPLACE INTO entities (id, entity_type, name, data, file_path, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+            "INSERT OR REPLACE INTO entities (entity_type, name, data, file_path, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
         )
-        .bind(id.to_string())
         .bind(entity_type.to_string())
         .bind(name)
         .bind(data)
@@ -168,36 +101,48 @@ impl EncyclopediaDb {
         Ok(())
     }
 
-    /// Returns the file_path for an entity by UUID.
-    pub async fn get_entity_file_path(&self, id: Uuid) -> Result<Option<String>, sqlx::Error> {
+    pub async fn delete_entity(&self, entity_type: EntityType, name: &str) -> Result<u64, sqlx::Error> {
+        let et = entity_type.to_string();
+        sqlx::query("DELETE FROM relations WHERE (from_type = $1 AND from_name = $2) OR (to_type = $1 AND to_name = $2)")
+            .bind(&et).bind(name).execute(&self.pool).await?;
+        let result = sqlx::query("DELETE FROM entities WHERE entity_type = $1 AND name = $2")
+            .bind(&et).bind(name).execute(&self.pool).await?;
+        Ok(result.rows_affected())
+    }
+
+    pub async fn get_entity(&self, entity_type: EntityType, name: &str) -> Result<Option<String>, sqlx::Error> {
         let row: Option<(String,)> = sqlx::query_as(
-            "SELECT file_path FROM entities WHERE id = $1"
+            "SELECT data FROM entities WHERE entity_type = $1 AND name = $2"
         )
-        .bind(id.to_string())
+        .bind(entity_type.to_string())
+        .bind(name)
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(row.map(|(d,)| d))
+    }
+
+    pub async fn get_entity_file_path(&self, entity_type: EntityType, name: &str) -> Result<Option<String>, sqlx::Error> {
+        let row: Option<(String,)> = sqlx::query_as(
+            "SELECT file_path FROM entities WHERE entity_type = $1 AND name = $2"
+        )
+        .bind(entity_type.to_string())
+        .bind(name)
         .fetch_optional(&self.pool)
         .await?;
         Ok(row.map(|(p,)| p))
     }
 
-    /// Deletes an entity from SQLite by its file path.
-    /// Used when the watcher detects a file deletion.
     pub async fn delete_entity_by_file_path(&self, file_path: &str) -> Result<u64, sqlx::Error> {
-        // First find the entity ID to clean up relations
-        let row: Option<(String,)> = sqlx::query_as(
-            "SELECT id FROM entities WHERE file_path = $1"
+        let row: Option<(String, String)> = sqlx::query_as(
+            "SELECT entity_type, name FROM entities WHERE file_path = $1"
         )
         .bind(file_path)
         .fetch_optional(&self.pool)
         .await?;
 
-        if let Some((id_str,)) = row {
-            if let Ok(id) = Uuid::parse_str(&id_str) {
-                // Delete relations
-                sqlx::query("DELETE FROM relations WHERE from_id = $1 OR to_id = $1")
-                    .bind(id.to_string())
-                    .execute(&self.pool)
-                    .await?;
-            }
+        if let Some((et, nm)) = &row {
+            sqlx::query("DELETE FROM relations WHERE (from_type = $1 AND from_name = $2) OR (to_type = $1 AND to_name = $2)")
+                .bind(et).bind(nm).execute(&self.pool).await?;
         }
 
         let result = sqlx::query("DELETE FROM entities WHERE file_path = $1")
@@ -207,135 +152,51 @@ impl EncyclopediaDb {
         Ok(result.rows_affected())
     }
 
-    pub async fn get_entity(&self, id: Uuid) -> Result<Option<(String, String, String)>, sqlx::Error> {
-        let row: Option<(String, String, String)> = sqlx::query_as(
-            "SELECT entity_type, name, data FROM entities WHERE id = $1"
-        )
-        .bind(id.to_string())
-        .fetch_optional(&self.pool)
-        .await?;
-        
-        Ok(row)
-    }
-
-    pub async fn list_entities(&self, entity_type: Option<EntityType>) -> Result<Vec<(Uuid, String, String)>, sqlx::Error> {
-        let rows: Vec<(String, String, String)> = if let Some(et) = entity_type {
-            sqlx::query_as(
-                "SELECT id, name, data FROM entities WHERE entity_type = $1 ORDER BY name"
-            )
-            .bind(et.to_string())
-            .fetch_all(&self.pool)
-            .await?
+    pub async fn list_entities(&self, entity_type: Option<EntityType>) -> Result<Vec<(String, String)>, sqlx::Error> {
+        let rows: Vec<(String, String)> = if let Some(et) = entity_type {
+            sqlx::query_as("SELECT name, data FROM entities WHERE entity_type = $1 ORDER BY name")
+                .bind(et.to_string())
+                .fetch_all(&self.pool)
+                .await?
         } else {
-            sqlx::query_as(
-                "SELECT id, name, data FROM entities ORDER BY name"
-            )
-            .fetch_all(&self.pool)
-            .await?
+            sqlx::query_as("SELECT name, data FROM entities ORDER BY name")
+                .fetch_all(&self.pool)
+                .await?
         };
-
-        let mut entries = Vec::new();
-        for (id_str, name, data) in rows {
-            if let Ok(id) = Uuid::parse_str(&id_str) {
-                entries.push((id, name, data));
-            }
-        }
-        Ok(entries)
+        Ok(rows)
     }
 
-    /// Performs a simple pattern matching search on entity names.
-    ///
-    /// Uses SQL `LIKE %query%` for partial matching. 
-    /// Restricts results to 20 items for performance.
-    pub async fn search_entities(&self, query: &str) -> Result<Vec<(Uuid, String, String, String)>, sqlx::Error> {
+    pub async fn search_entities(&self, query: &str) -> Result<Vec<(String, String, String)>, sqlx::Error> {
         let pattern = format!("%{}%", query);
-        let rows: Vec<(String, String, String, String)> = sqlx::query_as(
-            "SELECT id, entity_type, name, data FROM entities WHERE name LIKE $1 ORDER BY name LIMIT 20"
+        let rows: Vec<(String, String, String)> = sqlx::query_as(
+            "SELECT entity_type, name, data FROM entities WHERE name LIKE $1 ORDER BY name LIMIT 20"
         )
         .bind(pattern)
         .fetch_all(&self.pool)
         .await?;
-
-        let mut entries = Vec::new();
-        for (id_str, entity_type, name, data) in rows {
-            if let Ok(id) = Uuid::parse_str(&id_str) {
-                entries.push((id, entity_type, name, data));
-            }
-        }
-        Ok(entries)
+        Ok(rows)
     }
 
-    // Relation CRUD
-
-    /// Creates a directed relationship between two entities.
-    ///
-    /// This is a lightweight edge in the graph. The `relation_type` defines the semantic
-    /// meaning of the link (e.g., "FOUNDER_OF", "BORN_IN").
-    pub async fn insert_relation(&self, from_id: Uuid, to_id: Uuid, relation_type: &str) -> Result<(), sqlx::Error> {
+    pub async fn insert_relation(&self, from_type: EntityType, from_name: &str, to_type: EntityType, to_name: &str, relation_type: &str) -> Result<(), sqlx::Error> {
         sqlx::query(
-            "INSERT INTO relations (from_id, to_id, relation_type) VALUES ($1, $2, $3)"
+            "INSERT INTO relations (from_type, from_name, to_type, to_name, relation_type) VALUES ($1, $2, $3, $4, $5)"
         )
-        .bind(from_id.to_string())
-        .bind(to_id.to_string())
+        .bind(from_type.to_string())
+        .bind(from_name)
+        .bind(to_type.to_string())
+        .bind(to_name)
         .bind(relation_type)
         .execute(&self.pool)
         .await?;
         Ok(())
     }
 
-    pub async fn delete_relation(&self, from_id: Uuid, to_id: Uuid, relation_type: &str) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query(
-            "DELETE FROM relations WHERE from_id = $1 AND to_id = $2 AND relation_type = $3"
-        )
-        .bind(from_id.to_string())
-        .bind(to_id.to_string())
-        .bind(relation_type)
-        .execute(&self.pool)
-        .await?;
+    pub async fn clear_outgoing_relations(&self, entity_type: EntityType, name: &str) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM relations WHERE from_type = $1 AND from_name = $2")
+            .bind(entity_type.to_string())
+            .bind(name)
+            .execute(&self.pool)
+            .await?;
         Ok(result.rows_affected())
-    }
-
-    pub async fn clear_outgoing_relations(&self, from_id: Uuid) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query(
-            "DELETE FROM relations WHERE from_id = $1"
-        )
-        .bind(from_id.to_string())
-        .execute(&self.pool)
-        .await?;
-        Ok(result.rows_affected())
-    }
-
-    pub async fn get_relations_from(&self, from_id: Uuid) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
-        let rows: Vec<(String, String)> = sqlx::query_as(
-            "SELECT to_id, relation_type FROM relations WHERE from_id = $1"
-        )
-        .bind(from_id.to_string())
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut relations = Vec::new();
-        for (id_str, rel_type) in rows {
-             if let Ok(id) = Uuid::parse_str(&id_str) {
-                relations.push((id, rel_type));
-            }
-        }
-        Ok(relations)
-    }
-
-    pub async fn get_relations_to(&self, to_id: Uuid) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
-        let rows: Vec<(String, String)> = sqlx::query_as(
-            "SELECT from_id, relation_type FROM relations WHERE to_id = $1"
-        )
-        .bind(to_id.to_string())
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut relations = Vec::new();
-        for (id_str, rel_type) in rows {
-             if let Ok(id) = Uuid::parse_str(&id_str) {
-                relations.push((id, rel_type));
-            }
-        }
-        Ok(relations)
     }
 }

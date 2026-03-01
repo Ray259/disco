@@ -72,8 +72,8 @@ pub fn start_watcher(
                         if p.exists() {
                             // File was created or modified
                             match vault_for_task.sync_single_file(&p, &db_for_task).await {
-                                Ok(id) => {
-                                    println!("[vault-watcher] Synced: {} ({})", p.display(), id);
+                                Ok(()) => {
+                                    println!("[vault-watcher] Synced: {}", p.display());
                                 }
                                 Err(e) => {
                                     eprintln!("[vault-watcher] Error syncing {}: {}", p.display(), e);
