@@ -13,10 +13,14 @@ use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::relation::{Relation, RelationKind, FixedRelation};
 use crate::core::domain::traits::DomainEntity;
 
+/// Standard Jekyll/Obsidian frontmatter boundary.
 const FRONTMATTER_DELIMITER: &str = "---";
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
+/// Serializes an entity to a markdown string.
+/// Partitions atomic scalar fields into YAML frontmatter and rich text into the body.
+/// The entity name is used as the Markdown H1 header.
 pub fn entity_to_markdown<E: DomainEntity + MarkdownSerializable>(entity: &E) -> String {
     let fm = entity.to_frontmatter();
     let body = entity.to_body();
@@ -24,6 +28,7 @@ pub fn entity_to_markdown<E: DomainEntity + MarkdownSerializable>(entity: &E) ->
     format!("{}\n{}{}\n\n# {}\n\n{}\n", FRONTMATTER_DELIMITER, yaml, FRONTMATTER_DELIMITER, entity.name(), body)
 }
 
+/// Splitter for `---` delimited blocks.
 pub fn parse_markdown(content: &str) -> Result<(HashMap<String, YamlValue>, String), String> {
     let content = content.trim();
     if !content.starts_with(FRONTMATTER_DELIMITER) {
@@ -38,16 +43,19 @@ pub fn parse_markdown(content: &str) -> Result<(HashMap<String, YamlValue>, Stri
     Ok((fm, body))
 }
 
+/// A parsed entity from a markdown file.
 pub struct ParsedEntity {
     pub entity_type: EntityType,
     pub name: String,
     pub data: String,
 }
 
+/// High-level markdown factory.
+/// Extracts identity/type from document and dispatches to specific model parsers.
 pub fn markdown_to_entity_data(content: &str) -> Result<ParsedEntity, String> {
     let (fm, body) = parse_markdown(content)?;
     let et = entity_type_from_frontmatter(&fm)?;
-    // Extract name from `# Title` in body, or fall back to frontmatter
+    // Priority: Body H1 > Frontmatter "name" key
     let name = extract_title(&body)
         .or_else(|| fm.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()))
         .ok_or("No name/title found")?;
@@ -86,8 +94,11 @@ pub fn markdown_to_entity_data(content: &str) -> Result<ParsedEntity, String> {
     }
 }
 
+/// Logic to decompose an entity into Obsidian-compatible parts.
 pub trait MarkdownSerializable {
+    /// Scalar metadata fields.
     fn to_frontmatter(&self) -> HashMap<String, YamlValue>;
+    /// Rich text body content.
     fn to_body(&self) -> String;
 }
 

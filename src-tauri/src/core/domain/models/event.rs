@@ -5,6 +5,7 @@ use crate::core::domain::values::entity_ref::EntityRef;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// A historical event with a date range.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
     pub name: String,

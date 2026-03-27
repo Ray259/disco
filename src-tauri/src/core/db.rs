@@ -1,12 +1,16 @@
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use crate::core::domain::values::entity_ref::EntityType;
 
+/// Manages the SQLite database connection pool for the encyclopedia.
+/// Interface for the SQLite backend.
+/// Uses `sqlx` for asynchronous query execution.
 #[derive(Clone)]
 pub struct EncyclopediaDb {
     pub pool: Pool<Sqlite>,
 }
 
 impl EncyclopediaDb {
+    /// Initializes the database connection pool and ensures the schema is created.
     pub async fn init(url: &str) -> Result<Self, sqlx::Error> {
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
@@ -17,6 +21,9 @@ impl EncyclopediaDb {
         Ok(db)
     }
 
+    /// Executes DDL statements to create the required tables and indexes if they do not exist.
+    /// Bootstraps the SQLite schema if it doesn't exist.
+    /// Identity is enforced via `PRIMARY KEY (entity_type, name)` on the `entities` table.
     async fn init_schema(&self) -> Result<(), sqlx::Error> {
         sqlx::query(
             "
@@ -50,12 +57,16 @@ impl EncyclopediaDb {
         Ok(())
     }
 
+    /// Purges all records from the entities and relations tables.
     pub async fn empty_database(&self) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM relations").execute(&self.pool).await?;
         sqlx::query("DELETE FROM entities").execute(&self.pool).await?;
         Ok(())
     }
 
+    /// Inserts a new entity record into the entities table.
+    /// Persists an entity's JSON representation.
+    /// Overwrites existing entries if the `(entity_type, name)` composite key matches.
     pub async fn insert_entity(&self, entity_type: EntityType, name: &str, data: &str) -> Result<(), sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
@@ -71,6 +82,7 @@ impl EncyclopediaDb {
         Ok(())
     }
 
+    /// Updates the data payload and modification timestamp for an existing entity.
     pub async fn update_entity(&self, entity_type: EntityType, name: &str, data: &str) -> Result<u64, sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         let result = sqlx::query(
@@ -85,6 +97,7 @@ impl EncyclopediaDb {
         Ok(result.rows_affected())
     }
 
+    /// Inserts a new entity or updates an existing entity matched by its primary key.
     pub async fn upsert_entity(&self, entity_type: EntityType, name: &str, data: &str, file_path: &str) -> Result<(), sqlx::Error> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
@@ -101,6 +114,7 @@ impl EncyclopediaDb {
         Ok(())
     }
 
+    /// Removes an entity and all its associated relations from the database.
     pub async fn delete_entity(&self, entity_type: EntityType, name: &str) -> Result<u64, sqlx::Error> {
         let et = entity_type.to_string();
         sqlx::query("DELETE FROM relations WHERE (from_type = $1 AND from_name = $2) OR (to_type = $1 AND to_name = $2)")
@@ -110,6 +124,7 @@ impl EncyclopediaDb {
         Ok(result.rows_affected())
     }
 
+    /// Retrieves the JSON data payload for an entity by its type and name.
     pub async fn get_entity(&self, entity_type: EntityType, name: &str) -> Result<Option<String>, sqlx::Error> {
         let row: Option<(String,)> = sqlx::query_as(
             "SELECT data FROM entities WHERE entity_type = $1 AND name = $2"
@@ -121,6 +136,7 @@ impl EncyclopediaDb {
         Ok(row.map(|(d,)| d))
     }
 
+    /// Retrieves the local filesystem path associated with an entity.
     pub async fn get_entity_file_path(&self, entity_type: EntityType, name: &str) -> Result<Option<String>, sqlx::Error> {
         let row: Option<(String,)> = sqlx::query_as(
             "SELECT file_path FROM entities WHERE entity_type = $1 AND name = $2"
@@ -132,6 +148,7 @@ impl EncyclopediaDb {
         Ok(row.map(|(p,)| p))
     }
 
+    /// Deletes an entity and its relations based on its associated filesystem path.
     pub async fn delete_entity_by_file_path(&self, file_path: &str) -> Result<u64, sqlx::Error> {
         let row: Option<(String, String)> = sqlx::query_as(
             "SELECT entity_type, name FROM entities WHERE file_path = $1"
@@ -152,6 +169,7 @@ impl EncyclopediaDb {
         Ok(result.rows_affected())
     }
 
+    /// Returns a list of (name, data) pairs for all entities, optionally filtered by type.
     pub async fn list_entities(&self, entity_type: Option<EntityType>) -> Result<Vec<(String, String)>, sqlx::Error> {
         let rows: Vec<(String, String)> = if let Some(et) = entity_type {
             sqlx::query_as("SELECT name, data FROM entities WHERE entity_type = $1 ORDER BY name")
@@ -166,6 +184,8 @@ impl EncyclopediaDb {
         Ok(rows)
     }
 
+    /// Performs a case-insensitive `LIKE` pattern match on the name field.
+    /// Returns a maximum of 20 results to maintain performance.
     pub async fn search_entities(&self, query: &str) -> Result<Vec<(String, String, String)>, sqlx::Error> {
         let pattern = format!("%{}%", query);
         let rows: Vec<(String, String, String)> = sqlx::query_as(
@@ -177,6 +197,7 @@ impl EncyclopediaDb {
         Ok(rows)
     }
 
+    /// Inserts a directed relationship between two entities.
     pub async fn insert_relation(&self, from_type: EntityType, from_name: &str, to_type: EntityType, to_name: &str, relation_type: &str) -> Result<(), sqlx::Error> {
         sqlx::query(
             "INSERT INTO relations (from_type, from_name, to_type, to_name, relation_type) VALUES ($1, $2, $3, $4, $5)"
@@ -191,6 +212,7 @@ impl EncyclopediaDb {
         Ok(())
     }
 
+    /// Removes all relationships originating from the specified entity.
     pub async fn clear_outgoing_relations(&self, entity_type: EntityType, name: &str) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("DELETE FROM relations WHERE from_type = $1 AND from_name = $2")
             .bind(entity_type.to_string())

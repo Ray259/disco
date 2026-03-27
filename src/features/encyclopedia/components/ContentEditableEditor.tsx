@@ -13,8 +13,8 @@ import type { RichContentEditorProps } from "./RichContentEditorTypes";
 // ─── Constants ──────────────────────────────────────────────────────────
 
 const CHIP_ATTR = "data-entity-chip";
-const CHIP_ID_ATTR = "data-entity-id";
 const CHIP_TYPE_ATTR = "data-entity-type";
+const CHIP_PARAM_ATTR = "data-entity-param";
 
 // ─── Serializer: DOM → ContentSegment[] ─────────────────────────────────
 
@@ -275,8 +275,8 @@ export function ContentEditableEditor({
       const chip = document.createElement("span");
       chip.className = "rich-editor__chip";
       chip.setAttribute(CHIP_ATTR, "true");
-      chip.setAttribute(CHIP_ID_ATTR, entity.id);
       chip.setAttribute(CHIP_TYPE_ATTR, entity.entity_type);
+      chip.setAttribute(CHIP_PARAM_ATTR, entity.name);
       chip.contentEditable = "false";
       chip.textContent = `@${entity.name}`;
 
@@ -432,7 +432,7 @@ function MentionPopup({
       )}
       {results.map((r, i) => (
         <div
-          key={r.id}
+          key={`${r.entity_type}-${r.name}`}
           className={`rich-editor__popup-item ${i === selectedIdx ? "rich-editor__popup-item--selected" : ""}`}
           onMouseDown={(e) => {
             e.preventDefault(); // prevent blur

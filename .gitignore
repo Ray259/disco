@@ -28,3 +28,7 @@ public/audio/
 
 # Downloaded images
 public/images/
+
+# AI provider agent directories (synced from My-Brain-Is-Full-Crew submodule)
+.claude/
+.gemini/

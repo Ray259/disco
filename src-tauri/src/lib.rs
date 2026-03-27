@@ -13,6 +13,8 @@ use crate::core::db::EncyclopediaDb;
 use crate::core::vault::VaultManager;
 use crate::core::watcher;
 use crate::core::watcher::WatcherHandle;
+use crate::core::claude_bridge;
+use crate::core::gemini_bridge;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -78,6 +80,8 @@ pub fn run() {
                 
                 app.manage(db);
                 app.manage(vault);
+                app.manage(claude_bridge::init_claude_state());
+                app.manage(gemini_bridge::init_gemini_state());
             });
             Ok(())
         })
@@ -111,8 +115,15 @@ pub fn run() {
             commands::school::get_all_schools_of_thought,
             commands::school::get_school_of_thought,
             commands::school::create_school_of_thought,
+            commands::school::create_school_of_thought,
             commands::school::update_school_of_thought,
-            commands::search::search_entities
+            commands::search::search_entities,
+            claude_bridge::start_claude_session,
+            claude_bridge::send_claude_input,
+            claude_bridge::stop_claude_session,
+            gemini_bridge::start_gemini_session,
+            gemini_bridge::send_gemini_input,
+            gemini_bridge::stop_gemini_session
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

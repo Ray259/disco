@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "sync-crew": "bash scripts/sync-crew.sh",
     "postinstall": "bash scripts/download_assets.sh",
     "prepare": "husky"
   },

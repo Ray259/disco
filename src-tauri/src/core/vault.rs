@@ -9,17 +9,24 @@ use crate::core::markdown::{
     MarkdownSerializable,
 };
 
+/// Syncs and stores markdown files in the local vault directory.
+/// Orchestrates synchronization between the SQLite state and physical Markdown files.
 #[derive(Clone)]
 pub struct VaultManager {
+    /// User-defined Obsidian vault root.
     pub vault_path: Option<PathBuf>,
+    /// System-defined path for `vault_config.json`.
     pub app_data_dir: PathBuf,
 }
 
 impl VaultManager {
+    /// Gets the path to the vault configuration JSON file.
     fn get_config_path(app_data_dir: &Path) -> PathBuf {
         app_data_dir.join("vault_config.json")
     }
 
+    /// Reads the saved vault path from the config file.
+    /// Loads persistence config from `app_data_dir`.
     fn load_config(app_data_dir: &Path) -> Option<PathBuf> {
         let config_path = Self::get_config_path(app_data_dir);
         if let Ok(content) = fs::read_to_string(&config_path) {
@@ -33,6 +40,7 @@ impl VaultManager {
         None
     }
 
+    /// Saves the current vault path to the config file.
     pub fn save_config(&self) -> Result<(), String> {
         let config_path = Self::get_config_path(&self.app_data_dir);
         let path_str = self.vault_path.as_ref().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
@@ -42,6 +50,7 @@ impl VaultManager {
             .map_err(|e| format!("Failed to save config: {}", e))
     }
 
+    /// Creates a new VaultManager and sets up entity directories.
     pub fn new(app_data_dir: PathBuf, explicit_vault_path: Option<PathBuf>) -> Result<Self, String> {
         let vault_path = explicit_vault_path.or_else(|| Self::load_config(&app_data_dir));
         let _ = fs::create_dir_all(&app_data_dir);
@@ -59,6 +68,7 @@ impl VaultManager {
         Ok(manager)
     }
 
+    /// Scans the vault directory for markdown files and upserts them to the database.
     pub async fn full_sync(&self, db: &EncyclopediaDb) -> Result<SyncReport, String> {
         let mut report = SyncReport::default();
         let vault_path = match &self.vault_path {
@@ -75,6 +85,7 @@ impl VaultManager {
         Ok(report)
     }
 
+    /// Reads a markdown file, parses it, and stores the entity in the database.
     pub async fn sync_single_file(&self, path: &Path, db: &EncyclopediaDb) -> Result<(), String> {
         let content = fs::read_to_string(path)
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
@@ -85,6 +96,7 @@ impl VaultManager {
         Ok(())
     }
 
+    /// Converts an entity to markdown and writes it to the vault.
     pub fn write_entity<E: DomainEntity + MarkdownSerializable>(&self, entity: &E) -> Result<PathBuf, String> {
         let vault_path = self.vault_path.as_ref()
             .ok_or("No vault directory configured. Please select one in Settings.")?;
@@ -96,6 +108,7 @@ impl VaultManager {
         Ok(path)
     }
 
+    /// Deletes an entity's markdown file from the vault.
     pub async fn delete_entity_file(&self, entity_type: EntityType, name: &str, db: &EncyclopediaDb) -> Result<(), String> {
         if let Some(file_path) = db.get_entity_file_path(entity_type, name).await.map_err(|e| e.to_string())? {
             let path = Path::new(&file_path);
@@ -106,12 +119,14 @@ impl VaultManager {
         Ok(())
     }
 
+    /// Deletes an entity from the database when its file is removed.
     pub async fn handle_file_deleted(&self, path: &Path, db: &EncyclopediaDb) -> Result<(), String> {
         let file_path_str = path.to_string_lossy().to_string();
         db.delete_entity_by_file_path(&file_path_str).await.map_err(|e| e.to_string())?;
         Ok(())
     }
 
+    /// Writes all entities from the database out to markdown files in the vault.
     pub async fn export_all_from_db(&self, db: &EncyclopediaDb) -> Result<u32, String> {
         use crate::core::domain::models::figure::Figure;
         use crate::core::domain::models::event::Event;
@@ -138,12 +153,14 @@ impl VaultManager {
     }
 }
 
+/// Results of a vault sync operation.
 #[derive(Default)]
 pub struct SyncReport {
     pub synced: u32,
     pub errors: Vec<String>,
 }
 
+/// Recursively gets all absolute file paths in a directory.
 fn walkdir(dir: &Path) -> Vec<PathBuf> {
     let mut files = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {

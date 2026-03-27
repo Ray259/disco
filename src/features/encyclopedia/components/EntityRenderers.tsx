@@ -11,9 +11,6 @@ export const Renderers = {
             <h3 className="text-lg font-header text-[var(--disco-text-primary)] group-hover:text-white leading-none">
                 {item.name}
             </h3>
-            <span className="text-[10px] font-mono text-[var(--c-faint)] group-hover:text-[var(--disco-accent-orange)]">
-                {item.id.split('-')[0].toUpperCase()}
-            </span>
         </div>
         <div className="text-sm font-body text-[var(--disco-text-secondary)] italic leading-tight line-clamp-2">
             <RichContentDisplay content={item.primary_role} /> — <RichContentDisplay content={item.primary_location} />

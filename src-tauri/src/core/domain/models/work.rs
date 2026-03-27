@@ -5,6 +5,7 @@ use crate::core::domain::values::entity_ref::EntityRef;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// A published work, book, or creation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Work {
     pub title: String,

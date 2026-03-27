@@ -14,6 +14,11 @@ pub fn parse_flexible_date(s: &str, field: &str) -> Result<NaiveDate, String> {
 }
 
 
+/// Generic orchestration for entity creation.
+/// Performs three steps:
+/// 1. Materializes entity from DTO.
+/// 2. Persists JSON blob to SQLite.
+/// 3. Commits Obsidian-compatible Markdown to the Vault.
 pub async fn handle_create<E, D>(
     state: State<'_, EncyclopediaDb>,
     vault: State<'_, VaultManager>,
@@ -41,6 +46,8 @@ where
     Ok(name)
 }
 
+/// Generic orchestration for entity updates.
+/// Loads the current state from SQLite, applies the DTO diff, and re-syncs to the Vault.
 pub async fn handle_update<E, D>(
     state: State<'_, EncyclopediaDb>,
     vault: State<'_, VaultManager>,

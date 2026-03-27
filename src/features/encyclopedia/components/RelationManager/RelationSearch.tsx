@@ -65,7 +65,7 @@ export function RelationSearch({
         <ul className="absolute z-10 w-full bg-[var(--c-panel)] border-2 border-[var(--c-border)] mt-1 max-h-48 overflow-y-auto shadow-lg">
           {filtered.map((r) => (
             <li
-              key={r.id}
+              key={`${r.entity_type}-${r.name}`}
               className="p-2 hover:bg-[var(--c-deep)] cursor-pointer border-b border-[var(--c-border)] last:border-0 flex justify-between items-center"
               onClick={() => { onSelect(r); setQuery(''); setResults([]); }}
             >

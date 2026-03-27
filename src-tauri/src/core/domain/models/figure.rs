@@ -7,6 +7,7 @@ use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::zeitgeist::Zeitgeist;
 use crate::core::domain::values::relation::Relation;
 
+/// A major contribution made by a figure.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MajorContribution {
     pub title: String,
@@ -15,6 +16,7 @@ pub struct MajorContribution {
     pub impact: RichContent,
 }
 
+/// A historical figure or person.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Figure {
     pub name: String,

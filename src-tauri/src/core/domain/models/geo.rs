@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// A geographic location or region.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Geo {
     pub name: String,

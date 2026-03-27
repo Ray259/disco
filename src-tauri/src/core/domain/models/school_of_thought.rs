@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
 
+/// A school of thought or philosophical movement.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SchoolOfThought {
     pub name: String,

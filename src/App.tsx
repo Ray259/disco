@@ -7,10 +7,11 @@ import { EntityCreate } from "./features/encyclopedia/components/EntityCreate";
 import { ENTITY_CONFIG } from "./features/encyclopedia/components/EntityConfig";
 import { useEncyclopediaNavigation, EntityType as NavEntityType } from "./hooks/useEncyclopediaNavigation";
 import { deleteEntity } from "./features/encyclopedia/api";
+import { CrewTerminal } from "./features/crew/components/CrewTerminal";
 import "./App.css";
 
 function App() {
-  const { view, navigateToList, navigateToDetail, navigateToCreate, navigateToEdit } = useEncyclopediaNavigation();
+  const { view, navigateToList, navigateToDetail, navigateToCreate, navigateToEdit, navigateToCrew } = useEncyclopediaNavigation();
   const [showSettings, setShowSettings] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
@@ -43,12 +44,22 @@ function App() {
           />
         );
       }
+      case "crew":
+        return <CrewTerminal />;
+    }
+  };
+
+  const handleSidebarChange = (id: string) => {
+    if (id === "crew") {
+      navigateToCrew();
+    } else {
+      navigateToList(id as NavEntityType);
     }
   };
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/library_hero.jpg')", backgroundColor: "var(--disco-bg)" }}>
-      <Sidebar currentView={view.type === "list" ? view.entityType : ""} onChangeView={(t) => navigateToList(t as NavEntityType)} onOpenSettings={() => setShowSettings(true)} />
+      <Sidebar currentView={view.type === "list" ? view.entityType : view.type === "crew" ? "crew" : ""} onChangeView={handleSidebarChange} onOpenSettings={() => setShowSettings(true)} />
       <main className="flex-1 h-full relative overflow-hidden">{renderContent()}</main>
       {showSettings && <SettingsUI volume={volume} isMuted={isMuted} onVolumeChange={setVolume} onMuteToggle={() => setIsMuted(!isMuted)} onClose={() => setShowSettings(false)} />}
       <audio ref={audioRef} src="/audio/tiger_king.mp3" autoPlay loop style={{ display: "none" }} />

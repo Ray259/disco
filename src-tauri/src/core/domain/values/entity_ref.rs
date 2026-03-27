@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Enumerates the primary ontological entity categories modeled in the system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EntityType {
     Figure,
@@ -49,6 +50,7 @@ impl EntityType {
     }
 }
 
+/// A lightweight reference pointing to another entity, containing its classification and identifying name.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EntityRef {
     pub entity_type: EntityType,

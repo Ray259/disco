@@ -14,6 +14,7 @@ export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarPr
     { id: "geos", label: "Geography" },
     { id: "works", label: "Bibliography" },
     { id: "schools", label: "Schools of Thought" },
+    { id: "crew", label: "Agentic Crew" },
   ];
 
   return (
