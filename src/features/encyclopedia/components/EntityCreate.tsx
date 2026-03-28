@@ -26,7 +26,7 @@ export function EntityCreate({ onSuccess, onCancel, initialType, editName }: Pro
     }
   }, [editName, activeKey]);
 
-  if (loading) return <div className="p-12 text-center">Loading...</div>;
+  if (loading) return <div className="p-12 text-center italic text-[#efac55] opacity-60">"Your mind is a database of facts. It enables you to draw on these facts innately..."</div>;
 
   return (
     <div className="w-full h-full p-12 flex justify-center items-start overflow-y-auto bg-[var(--c-dark)]/70 backdrop-blur-sm">
@@ -35,7 +35,7 @@ export function EntityCreate({ onSuccess, onCancel, initialType, editName }: Pro
           <h2 className="text-3xl font-header uppercase tracking-wide mb-2" style={{ color: cfg.color }}>
             {editName ? "Edit Entry" : "New Entry"}
           </h2>
-          <p className="font-body italic text-[var(--c-dim)]">{editName ? "Refining the record..." : "Cataloging the world..."}</p>
+          <p className="font-body italic text-[var(--c-dim)]">{editName ? "This is the ledger you found in the trash. It's full of notes written in a man's dense cursive. Have a closer look -- maybe it can be salvaged to start keeping notes on the case?" : "Your mangled brain would like you to know that there is a boxer called Contact Mike."}</p>
         </div>
 
         {!editName && (

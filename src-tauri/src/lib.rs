@@ -15,6 +15,7 @@ use crate::core::watcher;
 use crate::core::watcher::WatcherHandle;
 use crate::core::claude_bridge;
 use crate::core::gemini_bridge;
+use crate::core::codex_bridge;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -30,40 +31,10 @@ pub fn run() {
                 // Initialize vault manager (loads config or defaults)
                 let vault = VaultManager::new(app_data_dir, None).expect("failed to init vault");
                 
-                // Export existing DB entities to vault on first run (migration)
-                // Only exports if vault is empty
-                if let Some(vp) = &vault.vault_path {
-                    let vault_files: Vec<_> = std::fs::read_dir(vp)
-                        .map(|entries| entries.filter_map(|e| e.ok()).collect())
-                        .unwrap_or_default();
-                    
-                    let has_md_files = vault_files.iter().any(|entry: &std::fs::DirEntry| {
-                        entry.path().is_dir() && {
-                            std::fs::read_dir(entry.path())
-                                .map(|e| e.filter_map(|e| e.ok())
-                                    .any(|f| f.path().extension().map_or(false, |ext| ext == "md")))
-                                .unwrap_or(false)
-                        }
-                    });
-                    
-                    if !has_md_files {
-                        match vault.export_all_from_db(&db).await {
-                            Ok(count) if count > 0 => println!("[vault] Migrated {} entities from DB to vault", count),
-                            Ok(_) => println!("[vault] No existing entities to migrate"),
-                            Err(e) => eprintln!("[vault] Migration error: {}", e),
-                        }
-                    }
-                }
-                
                 // Startup sync: load any vault files into SQLite
                 match vault.full_sync(&db).await {
-                    Ok(report) => {
-                        println!("[vault] Startup sync: {} files synced", report.synced);
-                        for err in &report.errors {
-                            eprintln!("[vault] Sync error: {}", err);
-                        }
-                    }
-                    Err(e) => eprintln!("[vault] Startup sync failed: {}", e),
+                    Ok(report) => if report.synced > 0 { println!("[vault] Startup sync: {} files synced", report.synced); },
+                    Err(e) => eprintln!("[vault] Startup sync error: {}", e),
                 }
                 
                 // Start file watcher for live sync with Obsidian
@@ -82,6 +53,7 @@ pub fn run() {
                 app.manage(vault);
                 app.manage(claude_bridge::init_claude_state());
                 app.manage(gemini_bridge::init_gemini_state());
+                app.manage(codex_bridge::init_codex_state());
             });
             Ok(())
         })
@@ -115,15 +87,24 @@ pub fn run() {
             commands::school::get_all_schools_of_thought,
             commands::school::get_school_of_thought,
             commands::school::create_school_of_thought,
-            commands::school::create_school_of_thought,
             commands::school::update_school_of_thought,
             commands::search::search_entities,
             claude_bridge::start_claude_session,
+            claude_bridge::resume_claude_session,
             claude_bridge::send_claude_input,
             claude_bridge::stop_claude_session,
+            claude_bridge::get_claude_session_id,
             gemini_bridge::start_gemini_session,
+            gemini_bridge::resume_gemini_session,
             gemini_bridge::send_gemini_input,
-            gemini_bridge::stop_gemini_session
+            gemini_bridge::stop_gemini_session,
+            gemini_bridge::get_gemini_session_id,
+            codex_bridge::start_codex_session,
+            codex_bridge::resume_codex_session,
+            codex_bridge::send_codex_input,
+            codex_bridge::stop_codex_session,
+            codex_bridge::get_codex_session_id,
+            commands::terminal::launch_terminal_session
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -151,14 +132,11 @@ async fn set_vault_path(
         return Err("Path does not exist or is not a directory".to_string());
     }
 
-    // Stop old watcher by unmanaging the old handle (it drops)
     app.unmanage::<WatcherHandle>();
 
-    // Create a new VaultManager with the new path
     let app_data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
     let new_vault = VaultManager::new(app_data_dir, Some(path_buf.clone()))?;
 
-    // Check if the NEW vault directory is empty of md files
     let vault_files: Vec<_> = std::fs::read_dir(&path_buf)
         .map(|entries| entries.filter_map(|e| e.ok()).collect())
         .unwrap_or_default();
@@ -171,8 +149,6 @@ async fn set_vault_path(
         }
     });
 
-    // If the new vault is empty, user might have created entities before picking a vault.
-    // Export their existing DB content into the new vault so they don't lose data.
     if !new_vault_has_md_files {
         match new_vault.export_all_from_db(&db).await {
             Ok(count) if count > 0 => println!("[vault] Exported {} existing entities into new vault", count),
@@ -181,16 +157,13 @@ async fn set_vault_path(
         }
     }
 
-    // Now empty the database completely to ensure 1 vault maps to 1 db version
     if let Err(e) = db.empty_database().await {
          return Err(format!("Failed to clear database before switching vaults: {}", e));
     }
 
-    // Create a new VaultManager with the new path
     let app_data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
     let new_vault = VaultManager::new(app_data_dir, Some(path_buf.clone()))?;
 
-    // Perform a full sync on the new directory
     match new_vault.full_sync(&db).await {
         Ok(report) => {
             println!("[vault] Changed path to {}. Synced {} files.", new_path, report.synced);
@@ -198,7 +171,6 @@ async fn set_vault_path(
         Err(e) => return Err(format!("Failed to sync new vault: {}", e)),
     }
 
-    // Start new watcher
     let vault_arc = Arc::new(new_vault.clone());
     let db_arc = Arc::new(db.inner().clone());
     match watcher::start_watcher(vault_arc, db_arc) {
@@ -209,8 +181,6 @@ async fn set_vault_path(
         Err(e) => return Err(format!("Failed to start new watcher: {}", e)),
     }
 
-    // Update the managed state with the new VaultManager
     app.manage(new_vault);
-    
     Ok(())
 }

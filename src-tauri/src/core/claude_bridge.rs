@@ -53,12 +53,33 @@ pub async fn start_claude_session(
         }
     }
 
-    let session_id = Uuid::new_v4().to_string();
+    let session_id = format!("session-{}", chrono::Local::now().format("%Y-%m-%d-%H-%M"));
+    println!("[claude_bridge] start_claude_session: id={}", session_id);
     let _ = app.emit("claude-out", ClaudeOutput {
-        text: format!("Session ready ({}). Type a message.\n", &session_id[..8]),
+        text: format!(">>> Established connection with Claude ({})...\n", session_id),
         is_error: false,
     });
     *guard = Some(ClaudeSession { session_id, is_first: true });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn resume_claude_session(
+    app: AppHandle,
+    state: tauri::State<'_, ClaudeState>,
+) -> Result<(), String> {
+    println!("[claude_bridge] resume_claude_session called");
+    let mut guard = state.lock().await;
+    if guard.is_some() {
+        return Ok(());
+    }
+
+    let session_id = "latest".to_string();
+    let _ = app.emit("claude-out", ClaudeOutput {
+        text: ">>> Resuming latest Claude session...\n".into(),
+        is_error: false,
+    });
+    *guard = Some(ClaudeSession { session_id, is_first: false });
     Ok(())
 }
 
@@ -83,8 +104,11 @@ pub async fn send_claude_input(
     drop(guard); // release lock while the process runs
 
     let app_clone = app.clone();
-    let vault_path = vault.vault_path.clone().unwrap_or_else(|| std::env::current_dir().unwrap());
-
+    let working_dir = match vault.vault_path.clone() {
+        Some(path) => path,
+        None => return Err("No vault path configured. Please set a vault path in settings first.".into()),
+    };
+ 
     tauri::async_runtime::spawn(async move {
         let session_arg = if is_first {
             format!("--session-id {}", session_id)
@@ -92,16 +116,17 @@ pub async fn send_claude_input(
             format!("--resume {}", session_id)
         };
 
-        let args = format!(
-            "claude -p '{}' {} --output-format text --verbose < /dev/null",
-            text.replace("'", "'\\''"),
-            session_arg
-        );
+        let binary_path = "claude";
+        println!("[claude_bridge] --- Executing: script -q /dev/null {} -p '...' {}", binary_path, session_arg);
 
-        let child = Command::new("sh")
-            .arg("-c")
-            .arg(&args)
-            .current_dir(&vault_path)
+        let mut child = Command::new("script")
+            .args(["-q", "/dev/null", binary_path])
+            .args(&["-p", &text, &session_arg, "--verbose"])
+            .current_dir(&working_dir)
+            .env("TERM", "xterm-256color")
+            .env("LANG", "en_US.UTF-8")
+            .env("LC_ALL", "en_US.UTF-8")
+            .env("FORCE_COLOR", "1")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn();
@@ -118,30 +143,49 @@ pub async fn send_claude_input(
         };
 
         // Stream stdout
-        if let Some(stdout) = child.stdout.take() {
-            let reader = tokio::io::BufReader::new(stdout);
-            let mut lines = reader.lines();
-            while let Ok(Some(line)) = lines.next_line().await {
-                let _ = app_clone.emit("claude-out", ClaudeOutput {
-                    text: format!("{}\n", line),
-                    is_error: false,
-                });
-            }
+        if let Some(mut stdout) = child.stdout.take() {
+            let app_clone = app_clone.clone();
+            tokio::spawn(async move {
+                eprintln!("[claude_bridge] --- STDOUT listener started.");
+                let mut buffer = [0u8; 1024];
+                while let Ok(n) = tokio::io::AsyncReadExt::read(&mut stdout, &mut buffer).await {
+                    if n == 0 { 
+                        eprintln!("[claude_bridge] --- STDOUT EOF reached.");
+                        break; 
+                    }
+                    let text = String::from_utf8_lossy(&buffer[..n]).to_string();
+                    eprintln!("[claude_bridge] RECV {} bytes: {:?}", n, text);
+                    let _ = app_clone.emit("claude-out", ClaudeOutput {
+                        text,
+                        is_error: false,
+                    });
+                }
+            });
         }
 
-        // Collect stderr
-        if let Some(stderr) = child.stderr.take() {
-            let reader = tokio::io::BufReader::new(stderr);
-            let mut lines = reader.lines();
-            while let Ok(Some(line)) = lines.next_line().await {
-                let _ = app_clone.emit("claude-out", ClaudeOutput {
-                    text: format!("{}\n", line),
-                    is_error: true,
-                });
-            }
+        // Stream stderr
+        if let Some(mut stderr) = child.stderr.take() {
+            let app_clone = app_clone.clone();
+            tokio::spawn(async move {
+                eprintln!("[claude_bridge] --- STDERR listener started.");
+                let mut buffer = [0u8; 1024];
+                while let Ok(n) = tokio::io::AsyncReadExt::read(&mut stderr, &mut buffer).await {
+                    if n == 0 { 
+                        eprintln!("[claude_bridge] --- STDERR EOF reached.");
+                        break; 
+                    }
+                    let text = String::from_utf8_lossy(&buffer[..n]).to_string();
+                    eprintln!("[claude_bridge] ERR RECV: {:?}", text);
+                    let _ = app_clone.emit("claude-out", ClaudeOutput {
+                        text,
+                        is_error: true,
+                    });
+                }
+            });
         }
 
-        let _ = child.wait().await;
+        let status = child.wait().await;
+        eprintln!("[claude_bridge] --- Process exited with status: {:?}", status);
     });
 
     Ok(())
@@ -154,4 +198,15 @@ pub async fn stop_claude_session(
     let mut guard = state.lock().await;
     guard.take();
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_claude_session_id(
+    state: tauri::State<'_, ClaudeState>,
+) -> Result<String, String> {
+    let guard = state.lock().await;
+    match guard.as_ref() {
+        Some(s) => Ok(s.session_id.clone()),
+        None => Err("No active Claude session".into()),
+    }
 }

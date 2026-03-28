@@ -22,7 +22,7 @@ import { SchoolForm } from "./forms/SchoolForm";
 
 export const ENTITY_CONFIG: Record<string, any> = {
     figures: {
-        title: "People",
+        title: "Figures of Note",
         fetcher: getAllFigures,
         getById: getFigure,
         renderer: Renderers.Figure,
@@ -31,7 +31,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
         color: "var(--disco-accent-orange)"
     },
     institutions: {
-        title: "Institutions",
+        title: "Established Institutions",
         fetcher: getAllInstitutions,
         getById: getInstitution,
         renderer: Renderers.Institution,
@@ -40,7 +40,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
         color: "var(--disco-accent-yellow)"
     },
     events: {
-        title: "Historical Events",
+        title: "The Historical Record",
         fetcher: getAllEvents,
         getById: getEvent,
         renderer: Renderers.Event,
@@ -49,7 +49,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
         color: "var(--disco-accent-purple)"
     },
     geos: {
-        title: "Geography",
+        title: "Geopolitical Coordinates",
         fetcher: getAllGeos,
         getById: getGeo,
         renderer: Renderers.Geo,
@@ -58,7 +58,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
         color: "var(--disco-accent-teal)"
     },
     works: {
-        title: "Bibliography",
+        title: "Bibliographic Archives",
         fetcher: getAllWorks,
         getById: getWork,
         renderer: Renderers.Work,
@@ -67,7 +67,7 @@ export const ENTITY_CONFIG: Record<string, any> = {
         color: "#d4d4d8"
     },
     schools: {
-        title: "Schools of Thought",
+        title: "Ideological Frameworks",
         fetcher: getAllSchoolsOfThought,
         getById: getSchoolOfThought,
         renderer: Renderers.School,

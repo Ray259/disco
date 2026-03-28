@@ -52,7 +52,7 @@ function GeoPickerField({ value, onPick, onClear }: { value: string; onPick: (na
   if (value) {
     return (
       <div>
-        <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-1 text-[var(--disco-accent-purple)]">3. Origin</label>
+        <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-1 text-[var(--disco-accent-purple)]">3. Geopolitical Origin</label>
         <div className="flex items-center gap-2 border-b border-[var(--c-border)] py-2">
           <span className="text-sm font-body text-[var(--disco-text-primary)] flex-1">{value}</span>
           <button type="button" onClick={onClear} className="text-[9px] font-mono text-[var(--c-ghost)] hover:text-white uppercase tracking-wider">change</button>
@@ -70,8 +70,8 @@ function GeoPickerField({ value, onPick, onClear }: { value: string; onPick: (na
 
   return (
     <div>
-      <RelationSearch label="3. Origin" placeholder="Search or type a new location..." entityType="Geo"
-        onSelect={(r: SearchResult) => onPick(r.name)} allowCreate onCreateLabel={creating ? "Creating..." : undefined} onCreate={handleCreate} />
+      <RelationSearch label="3. Geopolitical Origin" placeholder="Search the ruinous past..." entityType="Geo"
+        onSelect={(r: SearchResult) => onPick(r.name)} allowCreate onCreateLabel={creating ? "Analyzing facts..." : undefined} onCreate={handleCreate} />
       {error && <div className="text-[10px] font-mono text-red-400 mt-1">[ERROR] {error}</div>}
     </div>
   );
@@ -123,13 +123,13 @@ export function FigureForm({ onSuccess, onCancel, initialValues, editName }: Pro
 
   const c = "var(--disco-accent-orange)";
   return (
-    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "Update Figure" : "INTERNALIZE"}>
-      <FormInput className="uppercase" label="1. Designation" value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="ENTER NAME..." color={c} />
+    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "[ RE-INTERNALIZE ]" : "[ INTERNALIZE ]"}>
+      <FormInput className="uppercase" label="1. Subject Designation" value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="WHO IS THIS MAN?..." color={c} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <RichContentEditor label="2. Role" value={form.role} onChange={(segs) => setField("role", segs)} placeholder="e.g. Philosopher, Painter..." />
+        <RichContentEditor label="2. Primary Archetype" value={form.role} onChange={(segs) => setField("role", segs)} placeholder="Philosopher, Painter, Lunatic..." />
         <GeoPickerField value={form.location} onPick={(name) => setField("location", name)} onClear={() => setField("location", "")} />
       </div>
-      <RichContentEditor label="4. Defining Utterance" value={form.quote} onChange={(segs) => setField("quote", segs)} placeholder="&ldquo;...&rdquo;" multiline />
+      <RichContentEditor label="4. Significant Utterance" value={form.quote} onChange={(segs) => setField("quote", segs)} placeholder="&ldquo;...&rdquo;" multiline />
       <TemporalCoordinates startYear={form.startYear} endYear={form.endYear} onStartChange={(v) => setField("startYear", v)} onEndChange={(v) => setField("endYear", v)} />
       <ZeitgeistField value={form.zeitgeist} onChange={(v) => setField("zeitgeist", v)} />
       <CoreIdeologyField value={form.coreIdeology} onChange={(v) => setField("coreIdeology", v)} />
