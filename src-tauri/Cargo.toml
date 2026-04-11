@@ -31,6 +31,8 @@ notify = "7"
 notify-debouncer-mini = "0.5"
 serde_yaml = "0.9"
 tauri-plugin-dialog = "2.6.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # --- Development Build Size Optimizations ---
 [profile.dev]

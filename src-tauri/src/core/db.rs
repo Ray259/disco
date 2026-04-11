@@ -11,13 +11,16 @@ pub struct EncyclopediaDb {
 
 impl EncyclopediaDb {
     /// Initializes the database connection pool and ensures the schema is created.
+    #[tracing::instrument(skip(url))]
     pub async fn init(url: &str) -> Result<Self, sqlx::Error> {
+        tracing::debug!("Initializing database pool...");
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect(url)
             .await?;
         let db = Self { pool };
         db.init_schema().await?;
+        tracing::info!("Database initialized successfully");
         Ok(db)
     }
 
@@ -58,7 +61,9 @@ impl EncyclopediaDb {
     }
 
     /// Purges all records from the entities and relations tables.
+    #[tracing::instrument(skip(self))]
     pub async fn empty_database(&self) -> Result<(), sqlx::Error> {
+        tracing::info!("Purging all database records");
         sqlx::query("DELETE FROM relations").execute(&self.pool).await?;
         sqlx::query("DELETE FROM entities").execute(&self.pool).await?;
         Ok(())
@@ -67,7 +72,9 @@ impl EncyclopediaDb {
     /// Inserts a new entity record into the entities table.
     /// Persists an entity's JSON representation.
     /// Overwrites existing entries if the `(entity_type, name)` composite key matches.
+    #[tracing::instrument(skip(self, data))]
     pub async fn insert_entity(&self, entity_type: EntityType, name: &str, data: &str) -> Result<(), sqlx::Error> {
+        tracing::info!(%entity_type, name, "Inserting new entity");
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
             "INSERT INTO entities (entity_type, name, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)"
@@ -83,7 +90,9 @@ impl EncyclopediaDb {
     }
 
     /// Updates the data payload and modification timestamp for an existing entity.
+    #[tracing::instrument(skip(self, data))]
     pub async fn update_entity(&self, entity_type: EntityType, name: &str, data: &str) -> Result<u64, sqlx::Error> {
+        tracing::info!(%entity_type, name, "Updating existing entity");
         let now = chrono::Utc::now().to_rfc3339();
         let result = sqlx::query(
             "UPDATE entities SET data = $1, updated_at = $2 WHERE entity_type = $3 AND name = $4"
@@ -98,7 +107,9 @@ impl EncyclopediaDb {
     }
 
     /// Inserts a new entity or updates an existing entity matched by its primary key.
+    #[tracing::instrument(skip(self, data))]
     pub async fn upsert_entity(&self, entity_type: EntityType, name: &str, data: &str, file_path: &str) -> Result<(), sqlx::Error> {
+        tracing::debug!(%entity_type, name, file_path, "Upserting entity");
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
             "INSERT OR REPLACE INTO entities (entity_type, name, data, file_path, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)"
@@ -115,7 +126,9 @@ impl EncyclopediaDb {
     }
 
     /// Removes an entity and all its associated relations from the database.
+    #[tracing::instrument(skip(self))]
     pub async fn delete_entity(&self, entity_type: EntityType, name: &str) -> Result<u64, sqlx::Error> {
+        tracing::info!(%entity_type, name, "Deleting entity and relations");
         let et = entity_type.to_string();
         sqlx::query("DELETE FROM relations WHERE (from_type = $1 AND from_name = $2) OR (to_type = $1 AND to_name = $2)")
             .bind(&et).bind(name).execute(&self.pool).await?;

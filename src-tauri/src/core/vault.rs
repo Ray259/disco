@@ -69,24 +69,35 @@ impl VaultManager {
     }
 
     /// Scans the vault directory for markdown files and upserts them to the database.
+    #[tracing::instrument(skip(self, db))]
     pub async fn full_sync(&self, db: &EncyclopediaDb) -> Result<SyncReport, String> {
+        tracing::info!("Starting full vault sync");
         let mut report = SyncReport::default();
         let vault_path = match &self.vault_path {
             Some(p) => p,
-            None => return Ok(report),
+            None => {
+                tracing::warn!("Sync aborted: No vault path configured");
+                return Ok(report);
+            }
         };
         for entry in walkdir(vault_path) {
             if entry.extension().map_or(true, |ext| ext != "md") { continue; }
             match self.sync_single_file(&entry, db).await {
                 Ok(_) => report.synced += 1,
-                Err(e) => report.errors.push(format!("{}: {}", entry.display(), e)),
+                Err(e) => {
+                    tracing::error!(path = %entry.display(), "Sync error: {}", e);
+                    report.errors.push(format!("{}: {}", entry.display(), e));
+                }
             }
         }
+        tracing::info!(synced = report.synced, errors = report.errors.len(), "Full vault sync complete");
         Ok(report)
     }
 
     /// Reads a markdown file, parses it, and stores the entity in the database.
+    #[tracing::instrument(skip(self, db))]
     pub async fn sync_single_file(&self, path: &Path, db: &EncyclopediaDb) -> Result<(), String> {
+        tracing::debug!(path = %path.display(), "Syncing single file");
         let content = fs::read_to_string(path)
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
         let parsed = markdown_to_entity_data(&content)?;
@@ -97,7 +108,9 @@ impl VaultManager {
     }
 
     /// Converts an entity to markdown and writes it to the vault.
+    #[tracing::instrument(skip(self, entity))]
     pub fn write_entity<E: DomainEntity + MarkdownSerializable>(&self, entity: &E) -> Result<PathBuf, String> {
+        tracing::info!(name = %entity.name(), "Writing entity to vault");
         let vault_path = self.vault_path.as_ref()
             .ok_or("No vault directory configured. Please select one in Settings.")?;
         let dir = vault_path.join(entity_type_dir(&entity.entity_type()));
@@ -105,15 +118,19 @@ impl VaultManager {
         let path = dir.join(&filename);
         let content = entity_to_markdown(entity);
         fs::write(&path, &content).map_err(|e| format!("Failed to write {}: {}", path.display(), e))?;
+        tracing::debug!(path = %path.display(), "Write complete");
         Ok(path)
     }
 
     /// Deletes an entity's markdown file from the vault.
+    #[tracing::instrument(skip(self, db))]
     pub async fn delete_entity_file(&self, entity_type: EntityType, name: &str, db: &EncyclopediaDb) -> Result<(), String> {
+        tracing::info!(%entity_type, name, "Deleting entity file from vault");
         if let Some(file_path) = db.get_entity_file_path(entity_type, name).await.map_err(|e| e.to_string())? {
             let path = Path::new(&file_path);
             if path.exists() {
                 fs::remove_file(path).map_err(|e| format!("Failed to delete {}: {}", path.display(), e))?;
+                tracing::debug!(%file_path, "File removed");
             }
         }
         Ok(())
@@ -166,6 +183,9 @@ fn walkdir(dir: &Path) -> Vec<PathBuf> {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.starts_with('.') { continue; }
+            }
             if path.is_dir() { files.extend(walkdir(&path)); } else { files.push(path); }
         }
     }

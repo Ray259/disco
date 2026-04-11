@@ -29,6 +29,10 @@ pub fn start_watcher(
             if let Ok(event) = result {
                 for path in event.paths {
                     if path.extension().map_or(false, |ext| ext == "md") {
+                        // Skip hidden paths
+                        if path.components().any(|c| c.as_os_str().to_str().map_or(false, |s| s.starts_with('.') && s != "." && s != "..")) {
+                            continue;
+                        }
                         match event.kind {
                             EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_) => {
                                 let _ = tx_clone.blocking_send(path);
@@ -40,11 +44,18 @@ pub fn start_watcher(
             }
         },
         Config::default().with_poll_interval(Duration::from_millis(500)),
-    ).map_err(|e| format!("Failed to create file watcher: {}", e))?;
+    ).map_err(|e| {
+        tracing::error!("Failed to create file watcher: {}", e);
+        format!("Failed to create file watcher: {}", e)
+    })?;
     
     if let Some(path) = &vault_path {
+        tracing::info!(path = %path.display(), "Starting file watcher on vault");
         watcher.watch(path, RecursiveMode::Recursive)
-            .map_err(|e| format!("Failed to watch vault directory: {}", e))?;
+            .map_err(|e| {
+                tracing::error!(path = %path.display(), "Failed to watch vault: {}", e);
+                format!("Failed to watch vault directory: {}", e)
+            })?;
     }
     
     // Spawn async task to process file events with debouncing
@@ -73,20 +84,20 @@ pub fn start_watcher(
                             // File was created or modified
                             match vault_for_task.sync_single_file(&p, &db_for_task).await {
                                 Ok(()) => {
-                                    println!("[vault-watcher] Synced: {}", p.display());
+                                    tracing::info!(path = %p.display(), "File system event: Synced");
                                 }
                                 Err(e) => {
-                                    eprintln!("[vault-watcher] Error syncing {}: {}", p.display(), e);
+                                    tracing::error!(path = %p.display(), "Error syncing file: {}", e);
                                 }
                             }
                         } else {
                             // File was deleted
                             match vault_for_task.handle_file_deleted(&p, &db_for_task).await {
                                 Ok(_) => {
-                                    println!("[vault-watcher] Deleted: {}", p.display());
+                                    tracing::info!(path = %p.display(), "File system event: Deleted");
                                 }
                                 Err(e) => {
-                                    eprintln!("[vault-watcher] Error handling deletion {}: {}", p.display(), e);
+                                    tracing::error!(path = %p.display(), "Error handling deletion: {}", e);
                                 }
                             }
                         }

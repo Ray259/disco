@@ -19,6 +19,12 @@ use crate::core::codex_bridge;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env().add_directive(tracing::Level::INFO.into()))
+        .init();
+
+    tracing::info!("Starting DIS application...");
+
     tauri::Builder::default()
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
@@ -33,8 +39,8 @@ pub fn run() {
                 
                 // Startup sync: load any vault files into SQLite
                 match vault.full_sync(&db).await {
-                    Ok(report) => if report.synced > 0 { println!("[vault] Startup sync: {} files synced", report.synced); },
-                    Err(e) => eprintln!("[vault] Startup sync error: {}", e),
+                    Ok(report) => if report.synced > 0 { tracing::info!("[vault] Startup sync: {} files synced", report.synced); },
+                    Err(e) => tracing::error!("[vault] Startup sync error: {}", e),
                 }
                 
                 // Start file watcher for live sync with Obsidian
@@ -44,9 +50,9 @@ pub fn run() {
                     Ok(handle) => {
                         // Store the watcher handle to keep it alive
                         app.manage(handle);
-                        println!("[vault] File watcher started");
+                        tracing::info!("[vault] File watcher started");
                     }
-                    Err(e) => eprintln!("[vault] Failed to start file watcher: {}", e),
+                    Err(e) => tracing::error!("[vault] Failed to start file watcher: {}", e),
                 }
                 
                 app.manage(db);
@@ -151,9 +157,9 @@ async fn set_vault_path(
 
     if !new_vault_has_md_files {
         match new_vault.export_all_from_db(&db).await {
-            Ok(count) if count > 0 => println!("[vault] Exported {} existing entities into new vault", count),
-            Ok(_) => println!("[vault] No pre-existing entities to export"),
-            Err(e) => eprintln!("[vault] Export error: {}", e),
+            Ok(count) if count > 0 => tracing::info!("[vault] Exported {} existing entities into new vault", count),
+            Ok(_) => tracing::info!("[vault] No pre-existing entities to export"),
+            Err(e) => tracing::error!("[vault] Export error: {}", e),
         }
     }
 
@@ -166,7 +172,7 @@ async fn set_vault_path(
 
     match new_vault.full_sync(&db).await {
         Ok(report) => {
-            println!("[vault] Changed path to {}. Synced {} files.", new_path, report.synced);
+            tracing::info!("[vault] Changed path to {}. Synced {} files.", new_path, report.synced);
         }
         Err(e) => return Err(format!("Failed to sync new vault: {}", e)),
     }
@@ -176,7 +182,7 @@ async fn set_vault_path(
     match watcher::start_watcher(vault_arc, db_arc) {
         Ok(handle) => {
             app.manage(handle);
-            println!("[vault] Restarted file watcher for new path");
+            tracing::info!("[vault] Restarted file watcher for new path");
         }
         Err(e) => return Err(format!("Failed to start new watcher: {}", e)),
     }

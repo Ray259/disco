@@ -216,5 +216,5 @@ export async function searchEntities(query: string): Promise<SearchResult[]> {
 // --- Delete ---
 
 export async function deleteEntity(entityType: string, name: string): Promise<string> {
-  return await invoke("delete_entity", { entity_type: entityType, name });
+  return await invoke("delete_entity", { entityType, name });
 }
