@@ -545,3 +545,43 @@ pub fn safe_filename(name: &str) -> String {
 pub fn entity_type_dir(et: &EntityType) -> &'static str {
     et.dir_name()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_safe_filename_normal() {
+        assert_eq!(safe_filename("normal_file.md"), "normal_file.md");
+    }
+
+    #[test]
+    fn test_safe_filename_forbidden_chars() {
+        assert_eq!(safe_filename("file/with/slashes"), "file_with_slashes");
+        assert_eq!(safe_filename("file\\with\\backslashes"), "file_with_backslashes");
+        assert_eq!(safe_filename("file:with:colons"), "file_with_colons");
+        assert_eq!(safe_filename("file*with*asterisks"), "file_with_asterisks");
+        assert_eq!(safe_filename("file?with?questions"), "file_with_questions");
+        assert_eq!(safe_filename("file\"with\"quotes"), "file_with_quotes");
+        assert_eq!(safe_filename("file<with<less"), "file_with_less");
+        assert_eq!(safe_filename("file>with>greater"), "file_with_greater");
+        assert_eq!(safe_filename("file|with|pipes"), "file_with_pipes");
+    }
+
+    #[test]
+    fn test_safe_filename_multiple_forbidden() {
+        assert_eq!(safe_filename("f:i/l*e?\"<|>\\"), "f_i_l_e______");
+    }
+
+    #[test]
+    fn test_safe_filename_trimming() {
+        assert_eq!(safe_filename("  trimmed_file.md  "), "trimmed_file.md");
+        assert_eq!(safe_filename("\t  tabs_and_spaces  \n"), "tabs_and_spaces");
+    }
+
+    #[test]
+    fn test_safe_filename_empty() {
+        assert_eq!(safe_filename(""), "");
+        assert_eq!(safe_filename("   "), "");
+    }
+}
