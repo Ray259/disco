@@ -36,12 +36,24 @@ export function EventForm({ onSuccess, onCancel, initialValues, editName }: Prop
     finally { setLoading(false); }
   };
 
-  const c = "var(--disco-accent-purple)";
   return (
-    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "Update Event" : "Create Event"}>
-      <FormInput label="1. Designation" value={name} onChange={(e) => setName(e.target.value)} placeholder="ENTER NAME..." color={c} />
+    <FormLayout 
+      onSubmit={handleSubmit} 
+      onCancel={onCancel} 
+      loading={loading} 
+      error={error} 
+      theme="Event" 
+      submitLabel={editName ? "Update Event" : "Create Event"}
+    >
+      <FormInput 
+        label="1. Designation" 
+        value={name} 
+        onChange={(e) => setName(e.target.value)} 
+        placeholder="ENTER NAME..." 
+        themed 
+      />
       <RichContentEditor label="Description / Manifest" value={description} onChange={setDescription} placeholder="Details..." multiline />
-      <TemporalCoordinates startYear={startYear} endYear={endYear} onStartChange={setStartYear} onEndChange={setEndYear} color={c} />
+      <TemporalCoordinates startYear={startYear} endYear={endYear} onStartChange={setStartYear} onEndChange={setEndYear} />
     </FormLayout>
   );
 }

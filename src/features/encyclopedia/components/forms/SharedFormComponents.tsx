@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { DatePicker } from "../../../../components/DatePicker";
+import { SearchResult, createGeo } from "../../api";
+import { RelationSearch } from "../RelationManager/RelationSearch";
 
 interface FormLayoutProps {
   children: React.ReactNode;
@@ -8,12 +10,12 @@ interface FormLayoutProps {
   loading: boolean;
   error: string | null;
   submitLabel?: string;
-  color?: string;
+  theme?: string;
 }
 
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  color?: string;
+  themed?: boolean;
   className?: string;
 }
 
@@ -27,15 +29,14 @@ interface TemporalCoordinatesProps {
   endYear: string;
   onStartChange: (val: string) => void;
   onEndChange: (val: string) => void;
-  color?: string;
 }
 
 export function FormLayout({ 
   children, onSubmit, onCancel, loading, error, 
-  submitLabel = "INTERNALIZE", color = "white" 
+  submitLabel = "INTERNALIZE", theme = "Figure" 
 }: FormLayoutProps) {
   return (
-    <form onSubmit={onSubmit} className="space-y-12">
+    <form onSubmit={onSubmit} className="space-y-12" data-form-theme={theme}>
       {error && (
         <div className="mb-8 p-4 bg-[#2a1a1a] border-l-4 border-red-800 text-red-400 font-mono text-xs">
           [FAILURE] {error}
@@ -57,8 +58,7 @@ export function FormLayout({
          <button
            type="submit"
            disabled={loading}
-           className="bg-[var(--disco-text-primary)] text-black px-8 py-3 font-header text-xl uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50"
-           style={{ backgroundColor: color }}
+           className="submit-button--themed text-black px-8 py-3 font-header text-xl uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50"
          >
             {loading ? "PROCESSING..." : submitLabel}
          </button>
@@ -68,18 +68,14 @@ export function FormLayout({
   );
 }
 
-export function FormInput({ label, color, className = "", ...props }: FormInputProps) {
+export function FormInput({ label, themed, className = "", ...props }: FormInputProps) {
   return (
     <div className={`group ${className}`}>
-      <label 
-        className="label-mono transition-colors" 
-        style={{ color: color || undefined }}
-      >
+      <label className="label-mono transition-colors group-focus-within:text-[var(--theme-color)]">
         {label}
       </label>
       <input
-        className="w-full bg-transparent border-b border-[var(--c-border)] py-2 text-lg font-body text-[#ccc] focus:border-[var(--disco-accent-teal)] focus:outline-none transition-colors"
-        style={color ? { fontSize: "1.875rem", lineHeight: "2.25rem", fontFamily: "var(--font-header)", color: "white", borderBottomWidth: "2px" } : {}}
+        className={`w-full bg-transparent border-b border-[var(--c-border)] py-2 text-lg font-body text-[#ccc] focus:border-[var(--theme-color)] focus:outline-none transition-colors ${themed ? "form-header-input" : ""}`}
         {...props}
       />
     </div>
@@ -99,21 +95,86 @@ export function FormTextArea({ label, className = "", ...props }: FormTextAreaPr
   );
 }
 
-export function TemporalCoordinates({ startYear, endYear, onStartChange, onEndChange, color = "var(--disco-accent-yellow)" }: TemporalCoordinatesProps) {
+export function TemporalCoordinates({ startYear, endYear, onStartChange, onEndChange }: TemporalCoordinatesProps) {
   return (
     <div className="p-6 bg-[var(--c-surface)] border border-[var(--c-deep)]">
        <h3 className="mb-6 text-center">Temporal Coordinates</h3>
        <div className="flex items-center gap-6">
          <div className="flex-1">
            <label className="block text-[10px] text-[var(--c-ghost)] mb-1 font-mono text-center">START</label>
-           <DatePicker value={startYear} onChange={onStartChange} color={color} />
+           <DatePicker value={startYear} onChange={onStartChange} />
          </div>
          <span className="text-[var(--c-border)] text-xl">&mdash;</span>
          <div className="flex-1">
            <label className="block text-[10px] text-[var(--c-ghost)] mb-1 font-mono text-center">END</label>
-           <DatePicker value={endYear} onChange={onEndChange} color={color} />
+           <DatePicker value={endYear} onChange={onEndChange} />
          </div>
        </div>
+    </div>
+  );
+}
+
+export function GeoPickerField({ 
+  label = "Geopolitical Origin", 
+  value, 
+  onPick, 
+  onClear,
+  themeColor = "var(--disco-accent-purple)"
+}: { 
+  label?: string;
+  value: string; 
+  onPick: (name: string) => void; 
+  onClear: () => void;
+  themeColor?: string;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (value) {
+    return (
+      <div className="group">
+        <label className="label-mono transition-colors group-focus-within:text-[var(--theme-color)]" style={{ color: themeColor }}>
+          {label}
+        </label>
+        <div className="flex items-center gap-2 border-b border-[var(--c-border)] py-2">
+          <span className="text-sm font-body text-[var(--disco-text-primary)] flex-1">{value}</span>
+          <button 
+            type="button" 
+            onClick={onClear} 
+            className="text-[9px] font-mono text-[var(--c-ghost)] hover:text-white uppercase tracking-wider"
+          >
+            change
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCreate = async (name: string) => {
+    setCreating(true); 
+    setError(null);
+    try { 
+      await createGeo({ name }); 
+      onPick(name); 
+    } catch (err: any) { 
+      setError(err?.message || String(err)); 
+    } finally { 
+      setCreating(false); 
+    }
+  };
+
+  return (
+    <div>
+      <RelationSearch 
+        label={label} 
+        placeholder="Search the ruinous past..." 
+        entityType="Geo"
+        onSelect={(r: SearchResult) => onPick(r.name)} 
+        allowCreate 
+        onCreateLabel={creating ? "Analyzing facts..." : undefined} 
+        onCreate={handleCreate} 
+      />
+      {error && <div className="text-[10px] font-mono text-red-400 mt-1">[ERROR] {error}</div>}
     </div>
   );
 }

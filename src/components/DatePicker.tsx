@@ -4,7 +4,6 @@ interface DatePickerProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  color?: string;
 }
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -36,7 +35,7 @@ function formatDate(year: number, month: number, day: number): string {
 }
 
 
-export function DatePicker({ value, onChange, placeholder = "YYYY / YYYY-MM / YYYY-MM-DD", color = "var(--disco-accent-yellow)" }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "YYYY / YYYY-MM / YYYY-MM-DD" }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -98,12 +97,11 @@ export function DatePicker({ value, onChange, placeholder = "YYYY / YYYY-MM / YY
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full bg-[var(--c-dark)] border border-[var(--c-border)] p-3 text-center text-xl font-mono outline-none hover:border-[var(--c-border-light)] focus:border-[var(--disco-accent-orange)] transition-colors"
-          style={{ color: value ? color : "var(--c-ghost)" }}
+          className="w-full bg-[var(--c-dark)] border border-[var(--c-border)] p-3 text-center text-xl font-mono outline-none hover:border-[var(--c-border-light)] focus:border-[var(--theme-color)] transition-colors"
+          style={{ color: value ? "inherit" : "var(--c-ghost)" }}
         />
         {precision && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono uppercase tracking-widest opacity-50"
-            style={{ color }}>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono uppercase tracking-widest opacity-50 text-[var(--theme-color)]">
             {PRECISION_LABEL[precision]}
           </span>
         )}
@@ -143,10 +141,9 @@ export function DatePicker({ value, onChange, placeholder = "YYYY / YYYY-MM / YY
                 onClick={() => selectDay(day)}
                 className={`h-8 text-xs font-mono transition-all ${
                   isSelected(day)
-                    ? "text-black font-bold"
+                    ? "text-black font-bold bg-[var(--theme-color)]"
                     : "text-[var(--disco-text-secondary)] hover:text-white hover:bg-[var(--c-deep)]"
                 }`}
-                style={isSelected(day) ? { backgroundColor: color } : {}}
               >
                 {day}
               </button>

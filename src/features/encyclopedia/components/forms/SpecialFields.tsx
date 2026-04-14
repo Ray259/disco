@@ -6,12 +6,11 @@ import React, { useState } from "react";
 
 interface SectionDividerProps {
   label: string;
-  color?: string;
   collapsed?: boolean;
   onToggle?: () => void;
 }
 
-export function SectionDivider({ label, color = "var(--c-muted)", collapsed, onToggle }: SectionDividerProps) {
+export function SectionDivider({ label, collapsed, onToggle }: SectionDividerProps) {
   return (
     <button
       type="button"
@@ -20,8 +19,7 @@ export function SectionDivider({ label, color = "var(--c-muted)", collapsed, onT
     >
       <div className="h-px flex-1 bg-[var(--c-border)]" />
       <span
-        className="font-header text-sm tracking-[0.3em] uppercase transition-colors group-hover:brightness-125"
-        style={{ color }}
+        className="font-header text-sm tracking-[0.3em] uppercase transition-colors group-hover:brightness-125 text-[var(--section-accent,var(--c-muted))]"
       >
         ⟐ {label}
       </span>
@@ -35,19 +33,16 @@ export function SectionDivider({ label, color = "var(--c-muted)", collapsed, onT
   );
 }
 
-function SpecialTextArea({ label, value, onChange, placeholder, rows = 3, accentColor }: {
+function SpecialTextArea({ label, value, onChange, placeholder, rows = 3 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
-  accentColor?: string;
 }) {
   return (
     <div className="group">
-      <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-2 transition-colors"
-        style={{ color: accentColor || "var(--c-muted)" }}
-      >
+      <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-2 transition-colors text-[var(--section-accent,var(--c-muted))]">
         {label}
       </label>
       <textarea
@@ -55,27 +50,21 @@ function SpecialTextArea({ label, value, onChange, placeholder, rows = 3, accent
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent border border-[var(--c-border)] p-3 text-sm font-body text-[var(--disco-text-primary)] focus:outline-none transition-colors placeholder-[var(--c-ghost)] resize-none"
-        style={{ borderColor: undefined }}
-        onFocus={e => { if (accentColor) e.currentTarget.style.borderColor = accentColor; }}
-        onBlur={e => { e.currentTarget.style.borderColor = ""; }}
+        className="w-full bg-transparent border border-[var(--c-border)] p-3 text-sm font-body text-[var(--disco-text-primary)] focus:outline-none transition-colors placeholder-[var(--c-ghost)] resize-none focus:border-[var(--section-accent)]"
       />
     </div>
   );
 }
 
-function SpecialInput({ label, value, onChange, placeholder, accentColor }: {
+function SpecialInput({ label, value, onChange, placeholder }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-  accentColor?: string;
 }) {
   return (
     <div className="group">
-      <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-1 transition-colors"
-        style={{ color: accentColor || "var(--c-muted)" }}
-      >
+      <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-1 transition-colors text-[var(--section-accent,var(--c-muted))]">
         {label}
       </label>
       <input
@@ -83,9 +72,7 @@ function SpecialInput({ label, value, onChange, placeholder, accentColor }: {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent border-b border-[var(--c-border)] py-2 text-sm font-body text-[var(--disco-text-primary)] focus:outline-none transition-colors placeholder-[var(--c-ghost)]"
-        onFocus={e => { if (accentColor) e.currentTarget.style.borderColor = accentColor; }}
-        onBlur={e => { e.currentTarget.style.borderColor = ""; }}
+        className="w-full bg-transparent border-b border-[var(--c-border)] py-2 text-sm font-body text-[var(--disco-text-primary)] focus:outline-none transition-colors placeholder-[var(--c-ghost)] focus:border-[var(--section-accent)]"
       />
     </div>
   );
@@ -115,10 +102,10 @@ export function ZeitgeistField({ value, onChange }: ZeitgeistFieldProps) {
 
   return (
     <div>
-      <SectionDivider label="Zeitgeist" color="var(--disco-accent-teal)" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Zeitgeist" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "var(--disco-accent-teal)" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="zeitgeist">
           {/* Era — full width header */}
           <div className="mb-6">
             <SpecialInput
@@ -126,33 +113,30 @@ export function ZeitgeistField({ value, onChange }: ZeitgeistFieldProps) {
               value={value.era}
               onChange={v => update("era", v)}
               placeholder="e.g. The Enlightenment, Classical Antiquity..."
-              accentColor="var(--disco-accent-teal)"
             />
           </div>
 
           {/* Catalyst & Opposition — side by side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="special-section__card special-section__card--catalyst">
-              <div className="special-section__card-marker" style={{ backgroundColor: "var(--disco-accent-teal)" }} />
+              <div className="special-section__card-marker bg-[var(--section-accent)]" />
               <SpecialTextArea
                 label="Catalyst"
                 value={value.catalyst}
                 onChange={v => update("catalyst", v)}
                 placeholder="What triggered their work? The crisis, event, or condition that set them in motion..."
                 rows={4}
-                accentColor="var(--disco-accent-teal)"
               />
             </div>
 
             <div className="special-section__card special-section__card--opposition">
-              <div className="special-section__card-marker" style={{ backgroundColor: "var(--disco-accent-purple)" }} />
+              <div className="special-section__card-marker bg-[var(--disco-accent-purple)]" />
               <SpecialTextArea
                 label="Opposition"
                 value={value.opposition}
                 onChange={v => update("opposition", v)}
                 placeholder="What did they fight against? The institution, doctrine, or rival they opposed..."
                 rows={4}
-                accentColor="var(--disco-accent-purple)"
               />
             </div>
           </div>
@@ -188,15 +172,15 @@ export function CoreIdeologyField({ value, onChange }: CoreIdeologyFieldProps) {
 
   return (
     <div>
-      <SectionDivider label="Core Ideology" color="var(--disco-accent-yellow)" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Core Ideology" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "var(--disco-accent-yellow)" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="ideology">
           {/* Axiom — blockquote-style */}
           <div className="axiom-field">
             <div className="axiom-field__quote-mark">"</div>
             <div className="axiom-field__content">
-              <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-2 text-[var(--disco-accent-yellow)]">
+              <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-2 text-[var(--section-accent)]">
                 Axiom — The First Principle
               </label>
               <textarea
@@ -246,12 +230,11 @@ interface LineageFieldProps {
   onChange: (v: LineageState) => void;
 }
 
-function LineageColumn({ label, items, onAdd, onRemove, accentColor, placeholder }: {
+function LineageColumn({ label, items, onAdd, onRemove, placeholder }: {
   label: string;
   items: string[];
   onAdd: (name: string) => void;
   onRemove: (index: number) => void;
-  accentColor: string;
   placeholder: string;
 }) {
   const [draft, setDraft] = useState("");
@@ -266,12 +249,12 @@ function LineageColumn({ label, items, onAdd, onRemove, accentColor, placeholder
 
   return (
     <div className="lineage-column">
-      <h4 className="text-[10px] font-mono uppercase tracking-[0.25em] mb-3 text-center" style={{ color: accentColor }}>
+      <h4 className="text-[10px] font-mono uppercase tracking-[0.25em] mb-3 text-center text-[var(--column-accent,var(--section-accent))]">
         {label}
       </h4>
       <div className="space-y-1.5 mb-3 min-h-[40px]">
         {items.map((name, i) => (
-          <div key={i} className="lineage-chip" style={{ borderColor: accentColor }}>
+          <div key={i} className="lineage-chip" style={{ borderColor: "var(--column-accent, var(--section-accent))" }}>
             <span className="text-xs font-body text-[var(--disco-text-primary)] truncate">{name}</span>
             <button
               type="button"
@@ -289,9 +272,7 @@ function LineageColumn({ label, items, onAdd, onRemove, accentColor, placeholder
         onChange={e => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="w-full bg-transparent border-b border-[var(--c-border)] py-1 text-xs font-mono text-[var(--disco-text-secondary)] focus:outline-none placeholder-[var(--c-ghost)]"
-        onFocus={e => { e.currentTarget.style.borderColor = accentColor; }}
-        onBlur={e => { e.currentTarget.style.borderColor = ""; }}
+        className="w-full bg-transparent border-b border-[var(--c-border)] py-1 text-xs font-mono text-[var(--disco-text-secondary)] focus:outline-none placeholder-[var(--c-ghost)] focus:border-[var(--column-accent,var(--section-accent))]"
       />
       <span className="text-[9px] font-mono text-[var(--c-ghost)] mt-1 block">Press Enter to add</span>
     </div>
@@ -310,20 +291,21 @@ export function LineageField({ value, onChange }: LineageFieldProps) {
 
   return (
     <div>
-      <SectionDivider label="Intellectual Lineage" color="#a78bfa" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Intellectual Lineage" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "#a78bfa" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="lineage">
           {/* Main flow: Predecessors → [CENTER] → Successors */}
           <div className="lineage-flow">
-            <LineageColumn
-              label="Predecessors"
-              items={value.predecessors}
-              onAdd={n => addTo("predecessors", n)}
-              onRemove={i => removeFrom("predecessors", i)}
-              accentColor="var(--disco-accent-teal)"
-              placeholder="Who inspired them?"
-            />
+            <div style={{ "--column-accent": "var(--disco-accent-teal)" } as any}>
+              <LineageColumn
+                label="Predecessors"
+                items={value.predecessors}
+                onAdd={n => addTo("predecessors", n)}
+                onRemove={i => removeFrom("predecessors", i)}
+                placeholder="Who inspired them?"
+              />
+            </div>
 
             <div className="lineage-flow__arrow">
               <div className="lineage-flow__arrow-line" />
@@ -342,24 +324,23 @@ export function LineageField({ value, onChange }: LineageFieldProps) {
               <div className="lineage-flow__arrow-line" />
             </div>
 
-            <LineageColumn
-              label="Successors"
-              items={value.successors}
-              onAdd={n => addTo("successors", n)}
-              onRemove={i => removeFrom("successors", i)}
-              accentColor="var(--disco-accent-yellow)"
-              placeholder="Who carried on?"
-            />
+            <div style={{ "--column-accent": "var(--disco-accent-yellow)" } as any}>
+              <LineageColumn
+                label="Successors"
+                items={value.successors}
+                onAdd={n => addTo("successors", n)}
+                onRemove={i => removeFrom("successors", i)}
+                placeholder="Who carried on?"
+              />
+            </div>
           </div>
 
-          {/* Rivals — separate row */}
-          <div className="mt-6 pt-4 border-t border-[var(--c-border)]">
+          <div className="mt-6 pt-4 border-t border-[var(--c-border)]" style={{ "--column-accent": "#ef4444" } as any}>
             <LineageColumn
               label="⚔ Contemporary Rivals"
               items={value.rivals}
               onAdd={n => addTo("rivals", n)}
               onRemove={i => removeFrom("rivals", i)}
-              accentColor="#ef4444"
               placeholder="Who opposed them?"
             />
           </div>
@@ -385,60 +366,53 @@ interface LegacyFieldProps {
   onChange: (v: LegacyState) => void;
 }
 
-const LEGACY_CARDS: { key: keyof LegacyState; label: string; sublabel: string; color: string; placeholder: string }[] = [
+const LEGACY_CARDS: { key: keyof LegacyState; label: string; sublabel: string; placeholder: string }[] = [
   {
     key: "shortTermSuccess",
     label: "Short-term Success",
     sublabel: "Immediate impact during their time",
-    color: "#22c55e",
     placeholder: "What did they achieve in their lifetime?",
   },
   {
     key: "modernRelevance",
     label: "Modern Relevance",
     sublabel: "How they echo through history",
-    color: "var(--disco-accent-teal)",
     placeholder: "How are they viewed or used today?",
   },
   {
     key: "criticalFlaw",
     label: "Critical Flaw",
     sublabel: "The failing that undid them",
-    color: "#ef4444",
     placeholder: "What was their blind spot, their hubris?",
   },
   {
     key: "personalSynthesis",
     label: "Personal Synthesis",
     sublabel: "Their own final verdict",
-    color: "var(--disco-accent-yellow)",
     placeholder: "How did they ultimately view their life's work?",
   },
 ];
-
 export function LegacyField({ value, onChange }: LegacyFieldProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div>
-      <SectionDivider label="Legacy" color="#f59e0b" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Legacy" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "#f59e0b" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="legacy">
           <div className="space-y-4">
             {LEGACY_CARDS.map((card, i) => (
               <div
                 key={card.key}
                 className="legacy-card"
-                style={{
-                  "--legacy-accent": card.color,
-                  animationDelay: `${i * 60}ms`,
-                } as React.CSSProperties}
+                data-legacy-type={card.key}
+                style={{ animationDelay: `${i * 60}ms` } as React.CSSProperties}
               >
-                <div className="legacy-card__border" style={{ backgroundColor: card.color }} />
+                <div className="legacy-card__border" />
                 <div className="legacy-card__content">
                   <div className="flex items-baseline justify-between mb-2">
-                    <h4 className="text-xs font-header uppercase tracking-wider" style={{ color: card.color }}>
+                    <h4 className="text-xs font-header uppercase tracking-wider legacy-card__title">
                       {card.label}
                     </h4>
                     <span className="text-[9px] font-mono text-[var(--c-ghost)] italic">{card.sublabel}</span>
@@ -503,10 +477,10 @@ export function TerminologyField({ value, onChange }: TerminologyFieldProps) {
 
   return (
     <div>
-      <SectionDivider label="Key Terminology" color="#06b6d4" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Key Terminology" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "#06b6d4" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="terminology">
           {/* Existing entries */}
           <div className="space-y-3 mb-6">
             {value.entries.map((entry, i) => (
@@ -545,7 +519,7 @@ export function TerminologyField({ value, onChange }: TerminologyFieldProps) {
                 className="w-full bg-transparent border-b border-[var(--c-border)] py-1 text-xs font-mono text-[var(--disco-text-secondary)] focus:outline-none placeholder-[var(--c-ghost)]"
               />
             </div>
-            <button type="button" onClick={addEntry} className="btn-action text-[#06b6d4] border-[#06b6d4]/40 hover:border-[#06b6d4]">+ Add</button>
+            <button type="button" onClick={addEntry} className="btn-action text-[var(--section-accent)] border-[var(--section-accent)]/40 hover:border-[var(--section-accent)]">+ Add</button>
           </div>
           <span className="text-[9px] font-mono text-[var(--c-ghost)] mt-1 block">Shift+Enter to add</span>
         </div>
@@ -589,10 +563,10 @@ export function ContributionsField({ value, onChange }: ContributionsFieldProps)
 
   return (
     <div>
-      <SectionDivider label="Major Contributions" color="var(--disco-accent-orange)" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Major Contributions" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "var(--disco-accent-orange)" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="contributions">
           {/* Timeline entries */}
           <div className="contributions-timeline">
             {value.entries.map((entry, i) => (
@@ -616,11 +590,11 @@ export function ContributionsField({ value, onChange }: ContributionsFieldProps)
           {/* Add new */}
           <div className="mt-4 pt-4 border-t border-[var(--c-border)] space-y-3">
             <div className="grid grid-cols-[2fr_1fr] gap-3">
-              <SpecialInput label="Title" value={draft.title} onChange={v => setDraft({ ...draft, title: v })} placeholder="e.g. The Republic" accentColor="var(--disco-accent-orange)" />
-              <SpecialInput label="Date" value={draft.date} onChange={v => setDraft({ ...draft, date: v })} placeholder="e.g. 375 BCE" accentColor="var(--c-muted)" />
+              <SpecialInput label="Title" value={draft.title} onChange={v => setDraft({ ...draft, title: v })} placeholder="e.g. The Republic" />
+              <SpecialInput label="Date" value={draft.date} onChange={v => setDraft({ ...draft, date: v })} placeholder="e.g. 375 BCE" />
             </div>
-            <SpecialInput label="Impact" value={draft.impact} onChange={v => setDraft({ ...draft, impact: v })} placeholder="What was its significance?" accentColor="var(--c-muted)" />
-            <button type="button" onClick={addEntry} className="btn-action text-[var(--disco-accent-orange)] border-[var(--disco-accent-orange)]/40 hover:border-[var(--disco-accent-orange)]">+ Add Contribution</button>
+            <SpecialInput label="Impact" value={draft.impact} onChange={v => setDraft({ ...draft, impact: v })} placeholder="What was its significance?" />
+            <button type="button" onClick={addEntry} className="btn-action text-[var(--section-accent)] border-[var(--section-accent)]/40 hover:border-[var(--section-accent)]">+ Add Contribution</button>
           </div>
         </div>
       )}
@@ -648,10 +622,10 @@ export function InstitutionalField({ value, onChange }: InstitutionalFieldProps)
 
   return (
     <div>
-      <SectionDivider label="Institutional Power Base" color="var(--disco-accent-yellow)" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <SectionDivider label="Institutional Power Base" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
       {!collapsed && (
-        <div className="special-section" style={{ "--section-accent": "var(--disco-accent-yellow)" } as React.CSSProperties}>
+        <div className="special-section" data-section-theme="institutional">
           {/* Primary institution placeholder — entity ref */}
           <div className="mb-6 p-4 border border-dashed border-[var(--c-border)] opacity-50">
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--c-ghost)]">
@@ -661,14 +635,13 @@ export function InstitutionalField({ value, onChange }: InstitutionalFieldProps)
 
           <div className="space-y-6">
             <div className="special-section__card">
-              <div className="special-section__card-marker" style={{ backgroundColor: "var(--disco-accent-yellow)" }} />
+              <div className="special-section__card-marker bg-[var(--section-accent)]" />
               <SpecialTextArea
                 label="Funding Model"
                 value={value.fundingModel}
                 onChange={v => onChange({ ...value, fundingModel: v })}
                 placeholder="How did they sustain their work? Royal patronage, self-funded, crowdfunding..."
                 rows={2}
-                accentColor="var(--disco-accent-yellow)"
               />
             </div>
 
@@ -680,7 +653,6 @@ export function InstitutionalField({ value, onChange }: InstitutionalFieldProps)
                 onChange={v => onChange({ ...value, institutionalProduct: v })}
                 placeholder="What did they produce within the institution? Laws, theories, art..."
                 rows={2}
-                accentColor="var(--disco-accent-teal)"
               />
             </div>
 
@@ -692,7 +664,6 @@ export function InstitutionalField({ value, onChange }: InstitutionalFieldProps)
                 onChange={v => onChange({ ...value, successionPlan: v })}
                 placeholder="Who took over after them? What was the transition of power?"
                 rows={2}
-                accentColor="var(--disco-accent-purple)"
               />
             </div>
           </div>

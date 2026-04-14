@@ -29,10 +29,22 @@ export function WorkForm({ onSuccess, onCancel, initialValues, editName }: Props
     finally { setLoading(false); }
   };
 
-  const c = "#d4d4d8";
   return (
-    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "Update Work" : "Create Work"}>
-      <FormInput label="1. Designation" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="ENTER TITLE..." color={c} />
+    <FormLayout 
+      onSubmit={handleSubmit} 
+      onCancel={onCancel} 
+      loading={loading} 
+      error={error} 
+      theme="Work" 
+      submitLabel={editName ? "Update Work" : "Create Work"}
+    >
+      <FormInput 
+        label="1. Designation" 
+        value={title} 
+        onChange={(e) => setTitle(e.target.value)} 
+        placeholder="ENTER TITLE..." 
+        themed 
+      />
       <RichContentEditor label="2. Abstract (Summary)" value={summary} onChange={setSummary} placeholder="Attributes..." multiline />
       <div className="p-6 bg-[var(--c-surface)] border border-[var(--c-deep)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[var(--c-border-light)]" />
@@ -40,7 +52,7 @@ export function WorkForm({ onSuccess, onCancel, initialValues, editName }: Props
         <div className="flex justify-center">
           <div className="w-1/2">
             <label className="block text-[10px] text-[var(--c-ghost)] mb-1 font-mono text-center">PUBLISHED</label>
-            <DatePicker value={endYear} onChange={setEndYear} color="var(--disco-accent-yellow)" />
+            <DatePicker value={endYear} onChange={setEndYear} />
           </div>
         </div>
       </div>

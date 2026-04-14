@@ -187,7 +187,6 @@ fn parse_wiki_refs(s: &str) -> Vec<EntityRef> {
 }
 
 fn relations_section(relations: &[Relation]) -> String {
-    if relations.is_empty() { return String::new(); }
     let items: Vec<String> = relations.iter().map(|r| {
         let kind_str = match &r.kind {
             RelationKind::Custom(s) => s.clone(),
@@ -195,7 +194,7 @@ fn relations_section(relations: &[Relation]) -> String {
         };
         format!("- {} → [[{}/{}|{}]]", kind_str, r.target.entity_type.dir_name(), r.target.display_text, r.target.display_text)
     }).collect();
-    format!("## Relations\n\n{}", items.join("\n"))
+    format!("\n## Relations\n\n{}", items.join("\n"))
 }
 
 fn parse_relations_section(content: &str) -> Vec<Relation> {
@@ -248,14 +247,17 @@ impl MarkdownSerializable for Figure {
         let mut s = Vec::new();
         s.push(format!("**Role:** {}", md(&self.primary_role)));
         s.push(format!("**Origin:** {}", md(&self.primary_location)));
-        if let Some(q) = &self.defining_quote { s.push(format!("\n> {}", md(q))); }
-        if !self.predecessors.is_empty() { s.push(format!("\n**Predecessors:** {}", refs_to_links(&self.predecessors))); }
-        if !self.contemporary_rivals.is_empty() { s.push(format!("**Rivals:** {}", refs_to_links(&self.contemporary_rivals))); }
-        if !self.successors.is_empty() { s.push(format!("**Successors:** {}", refs_to_links(&self.successors))); }
-        if let Some(inst) = &self.primary_institution {
-            s.push(format!("**Institution:** [[{}/{}|{}]]", inst.entity_type.dir_name(), inst.display_text, inst.display_text));
-        }
-        let rich_sections: Vec<(&str, &Option<RichContent>)> = vec![
+        s.push(format!("> {}", self.defining_quote.as_ref().map(md).unwrap_or_default()));
+        s.push(format!("**Predecessors:** {}", refs_to_links(&self.predecessors)));
+        s.push(format!("**Rivals:** {}", refs_to_links(&self.contemporary_rivals)));
+        s.push(format!("**Successors:** {}", refs_to_links(&self.successors)));
+        
+        let inst_link = self.primary_institution.as_ref()
+            .map(|inst| format!("[[{}/{}|{}]]", inst.entity_type.dir_name(), inst.display_text, inst.display_text))
+            .unwrap_or_default();
+        s.push(format!("**Institution:** {}", inst_link));
+
+        let rich_sections = vec![
             ("Axiom", &self.axiom), ("Argument Flow", &self.argument_flow),
             ("Funding Model", &self.funding_model), ("Institutional Product", &self.institutional_product),
             ("Succession Plan", &self.succession_plan), ("Short Term Success", &self.short_term_success),
@@ -263,10 +265,9 @@ impl MarkdownSerializable for Figure {
             ("Personal Synthesis", &self.personal_synthesis),
         ];
         for (label, field) in rich_sections {
-            if let Some(rc) = field { s.push(format!("\n## {}\n\n{}", label, md(rc))); }
+            s.push(format!("\n## {}\n\n{}", label, field.as_ref().map(md).unwrap_or_default()));
         }
-        let rel = relations_section(&self.relations);
-        if !rel.is_empty() { s.push(format!("\n{}", rel)); }
+        s.push(relations_section(&self.relations));
         s.join("\n")
     }
 }
@@ -329,17 +330,15 @@ impl MarkdownSerializable for Event {
 
     fn to_body(&self) -> String {
         let mut s = Vec::new();
-        if let Some(desc) = &self.description { s.push(format!("## Description\n\n{}", md(desc))); }
-        if !self.causes.is_empty() {
-            let items: Vec<String> = self.causes.iter().map(|c| format!("- {}", md(c))).collect();
-            s.push(format!("## Causes\n\n{}", items.join("\n")));
-        }
-        if !self.consequences.is_empty() {
-            let items: Vec<String> = self.consequences.iter().map(|c| format!("- {}", md(c))).collect();
-            s.push(format!("## Consequences\n\n{}", items.join("\n")));
-        }
-        let rel = relations_section(&self.relations);
-        if !rel.is_empty() { s.push(rel); }
+        s.push(format!("## Description\n\n{}", self.description.as_ref().map(md).unwrap_or_default()));
+        
+        let causes_items: Vec<String> = self.causes.iter().map(|c| format!("- {}", md(c))).collect();
+        s.push(format!("## Causes\n\n{}", causes_items.join("\n")));
+
+        let cons_items: Vec<String> = self.consequences.iter().map(|c| format!("- {}", md(c))).collect();
+        s.push(format!("## Consequences\n\n{}", cons_items.join("\n")));
+
+        s.push(relations_section(&self.relations));
         s.join("\n\n")
     }
 }
@@ -372,14 +371,13 @@ impl MarkdownSerializable for Institution {
 
     fn to_body(&self) -> String {
         let mut s = Vec::new();
-        if let Some(desc) = &self.description { s.push(format!("## Description\n\n{}", md(desc))); }
-        if !self.founders.is_empty() { s.push(format!("**Founders:** {}", refs_to_links(&self.founders))); }
-        if !self.products.is_empty() {
-            let items: Vec<String> = self.products.iter().map(|p| format!("- {}", md(p))).collect();
-            s.push(format!("## Products\n\n{}", items.join("\n")));
-        }
-        let rel = relations_section(&self.relations);
-        if !rel.is_empty() { s.push(rel); }
+        s.push(format!("## Description\n\n{}", self.description.as_ref().map(md).unwrap_or_default()));
+        s.push(format!("**Founders:** {}", refs_to_links(&self.founders)));
+        
+        let prod_items: Vec<String> = self.products.iter().map(|p| format!("- {}", md(p))).collect();
+        s.push(format!("## Products\n\n{}", prod_items.join("\n")));
+
+        s.push(relations_section(&self.relations));
         s.join("\n\n")
     }
 }
@@ -417,14 +415,13 @@ impl MarkdownSerializable for Work {
 
     fn to_body(&self) -> String {
         let mut s = Vec::new();
-        if !self.authors.is_empty() { s.push(format!("**Authors:** {}", refs_to_links(&self.authors))); }
-        if let Some(sum) = &self.summary { s.push(format!("## Summary\n\n{}", md(sum))); }
-        if !self.key_ideas.is_empty() {
-            let items: Vec<String> = self.key_ideas.iter().map(|k| format!("- {}", md(k))).collect();
-            s.push(format!("## Key Ideas\n\n{}", items.join("\n")));
-        }
-        let rel = relations_section(&self.relations);
-        if !rel.is_empty() { s.push(rel); }
+        s.push(format!("**Authors:** {}", refs_to_links(&self.authors)));
+        s.push(format!("## Summary\n\n{}", self.summary.as_ref().map(md).unwrap_or_default()));
+        
+        let ideas_items: Vec<String> = self.key_ideas.iter().map(|k| format!("- {}", md(k))).collect();
+        s.push(format!("## Key Ideas\n\n{}", ideas_items.join("\n")));
+
+        s.push(relations_section(&self.relations));
         s.join("\n\n")
     }
 }
@@ -466,10 +463,9 @@ impl MarkdownSerializable for Geo {
 
     fn to_body(&self) -> String {
         let mut s = Vec::new();
-        if let Some(r) = &self.region { s.push(format!("## Region\n\n{}", md(r))); }
-        if let Some(d) = &self.description { s.push(format!("## Description\n\n{}", md(d))); }
-        let rel = relations_section(&self.relations);
-        if !rel.is_empty() { s.push(rel); }
+        s.push(format!("## Region\n\n{}", self.region.as_ref().map(md).unwrap_or_default()));
+        s.push(format!("## Description\n\n{}", self.description.as_ref().map(md).unwrap_or_default()));
+        s.push(relations_section(&self.relations));
         s.join("\n\n")
     }
 }
@@ -508,9 +504,8 @@ impl MarkdownSerializable for SchoolOfThought {
 
     fn to_body(&self) -> String {
         let mut s = Vec::new();
-        if let Some(d) = &self.description { s.push(format!("## Description\n\n{}", md(d))); }
-        let rel = relations_section(&self.relations);
-        if !rel.is_empty() { s.push(rel); }
+        s.push(format!("## Description\n\n{}", self.description.as_ref().map(md).unwrap_or_default()));
+        s.push(relations_section(&self.relations));
         s.join("\n\n")
     }
 }

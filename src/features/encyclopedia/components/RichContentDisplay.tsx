@@ -1,12 +1,12 @@
 import { RichContent } from "../api";
 
-const ENTITY_TYPE_META: Record<string, { configKey: string; color: string }> = {
-  Figure:          { configKey: "figures",       color: "var(--disco-accent-orange)" },
-  Institution:     { configKey: "institutions",  color: "var(--disco-accent-yellow)" },
-  Event:           { configKey: "events",        color: "var(--disco-accent-purple)" },
-  Geo:             { configKey: "geos",          color: "var(--disco-accent-teal)" },
-  Work:            { configKey: "works",         color: "#d4d4d8" },
-  SchoolOfThought: { configKey: "schools",       color: "#ef4444" },
+const CONFIG_KEYS: Record<string, string> = {
+  Figure: "figures",
+  Institution: "institutions",
+  Event: "events",
+  Geo: "geos",
+  Work: "works",
+  SchoolOfThought: "schools",
 };
 
 interface Props {
@@ -23,11 +23,16 @@ export function RichContentDisplay({ content, className = "", onEntityClick }: P
         if ("Text" in seg) return <span key={i}>{seg.Text}</span>;
         if ("EntityRef" in seg) {
           const ref = seg.EntityRef;
-          const meta = ENTITY_TYPE_META[ref.entity_type] || { configKey: "", color: "var(--c-muted)" };
+          const configKey = CONFIG_KEYS[ref.entity_type] || "";
           const label = ref.display_text.replace(/^@/, "");
           return (
-            <span key={i} className="rich-entity-ref" style={{ color: meta.color }} title={`${ref.entity_type}: ${label}`}
-              onClick={(e) => { e.stopPropagation(); onEntityClick?.(meta.configKey, label); }}>
+            <span 
+              key={i} 
+              className="rich-entity-ref" 
+              data-entity-type={ref.entity_type}
+              title={`${ref.entity_type}: ${label}`}
+              onClick={(e) => { e.stopPropagation(); onEntityClick?.(configKey, label); }}
+            >
               {label}
             </span>
           );

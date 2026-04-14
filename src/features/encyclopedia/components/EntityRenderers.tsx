@@ -5,8 +5,8 @@ const itemBase = "border border-transparent hover:border-[var(--c-border-light)]
 
 export const Renderers = {
   Figure: (item: Figure) => (
-    <div className={itemBase}>
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--disco-accent-teal)] opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className={itemBase} data-entity-type="Figure">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--theme-color)] opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="flex justify-between items-baseline mb-1">
             <h3 className="text-lg font-header text-[var(--disco-text-primary)] group-hover:text-white leading-none">
                 {item.name}
@@ -19,16 +19,16 @@ export const Renderers = {
   ),
 
   Institution: (item: Institution) => (
-    <div className={itemBase}>
-      <h3 className="text-xl font-header text-[var(--disco-accent-yellow)]">{item.name}</h3>
+    <div className={itemBase} data-entity-type="Institution">
+      <h3 className="text-xl font-header text-[var(--theme-color)]">{item.name}</h3>
       {item.description && <div className="text-sm text-gray-400"><RichContentDisplay content={item.description} /></div>}
     </div>
   ),
 
   Event: (item: Event) => (
-    <div className={`${itemBase} flex justify-between items-center`}>
+    <div className={`${itemBase} flex justify-between items-center`} data-entity-type="Event">
       <div>
-        <h3 className="text-lg font-header text-white">{item.name}</h3>
+        <h3 className="text-lg font-header text-white group-hover:text-[var(--theme-color)] transition-colors">{item.name}</h3>
         {item.description && <div className="text-xs text-gray-500 line-clamp-1"><RichContentDisplay content={item.description} /></div>}
       </div>
       <div className="text-xs font-mono text-[var(--c-muted)]">
@@ -38,9 +38,9 @@ export const Renderers = {
   ),
 
   Geo: (item: Geo) => (
-    <div className={itemBase}>
+    <div className={itemBase} data-entity-type="Geo">
       <div className="flex justify-between items-baseline">
-        <h3 className="text-lg font-header text-[var(--disco-accent-teal)]">{item.name}</h3>
+        <h3 className="text-lg font-header text-[var(--theme-color)]">{item.name}</h3>
         {item.region && <span className="text-xs font-mono uppercase text-[var(--c-faint)]"><RichContentDisplay content={item.region} /></span>}
       </div>
       {item.description && <div className="text-sm text-gray-400 mt-1"><RichContentDisplay content={item.description} /></div>}
@@ -48,15 +48,15 @@ export const Renderers = {
   ),
 
   Work: (item: Work) => (
-    <div className={itemBase}>
-      <h3 className="text-lg font-serif italic text-white">"{item.title}"</h3>
+    <div className={itemBase} data-entity-type="Work">
+      <h3 className="text-lg font-serif italic text-white group-hover:text-[var(--theme-color)] transition-colors">"{item.title}"</h3>
       {item.summary && <div className="text-sm text-gray-500 mt-1 line-clamp-2"><RichContentDisplay content={item.summary} /></div>}
     </div>
   ),
 
   School: (item: SchoolOfThought) => (
-    <div className={itemBase}>
-      <h3 className="text-xl font-header uppercase text-[var(--disco-accent-orange)]">{item.name}</h3>
+    <div className={itemBase} data-entity-type="SchoolOfThought">
+      <h3 className="text-xl font-header uppercase text-[var(--theme-color)]">{item.name}</h3>
       {item.description && <div className="text-sm text-gray-400 mt-1 border-l-2 border-[var(--c-border)] pl-2"><RichContentDisplay content={item.description} /></div>}
     </div>
   )

@@ -34,7 +34,19 @@
   font-family: var(--font-body);
   line-height: 1.6;
   color: var(--disco-text-primary);
+
+  /* Default Entity Theme */
+  --theme-color: var(--disco-text-secondary);
 }
+
+[data-entity-type="Figure"], [data-form-theme="Figure"], [data-view-id="figures"] { --theme-color: var(--disco-accent-orange); }
+[data-entity-type="Institution"], [data-form-theme="Institution"], [data-view-id="institutions"] { --theme-color: var(--disco-accent-yellow); }
+[data-entity-type="Event"], [data-form-theme="Event"], [data-view-id="events"] { --theme-color: var(--disco-accent-purple); }
+[data-entity-type="Geo"], [data-form-theme="Geo"], [data-view-id="geos"] { --theme-color: var(--disco-accent-teal); }
+[data-entity-type="Work"], [data-form-theme="Work"], [data-view-id="works"] { --theme-color: #d4d4d8; }
+[data-entity-type="SchoolOfThought"], [data-form-theme="SchoolOfThought"], [data-view-id="schools"] { --theme-color: #ef4444; }
+[data-view-id="crew"] { --theme-color: var(--disco-accent-orange); }
+
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -377,6 +389,7 @@ input, button, select, textarea {
   text-decoration: none;
   border-bottom: 1px dotted transparent;
   transition: border-color 0.15s, filter 0.15s;
+  color: var(--theme-color);
 }
 
 .rich-entity-ref:hover {
@@ -440,9 +453,9 @@ input, button, select, textarea {
 
 .rich-editor__chip {
   display: inline;
-  color: #818cf8;
   cursor: default;
   transition: opacity 0.15s;
+  color: var(--theme-color);
 }
 
 .rich-editor__chip:hover {
@@ -500,5 +513,67 @@ input, button, select, textarea {
   letter-spacing: 0.05em;
   background: var(--c-deep);
   padding: 0.1rem 0.35rem;
-  color: var(--c-dim);
+  color: var(--theme-color, var(--c-dim));
+}
+
+.rich-editor__popup-hint {
+  padding: 0.4rem 0.75rem;
+  background: var(--c-deep);
+  border-top: 1px solid var(--c-border);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+/* ─── Sidebar ─── */
+.sidebar-nav-button[data-active="true"] {
+  color: var(--theme-color) !important;
+  border-right-color: var(--theme-color) !important;
+}
+
+/* ─── Form Elements ─── */
+.form-header-input {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-family: var(--font-header);
+  color: white;
+  border-bottom-width: 2px !important;
+}
+
+.submit-button--themed {
+  background-color: var(--theme-color) !important;
+}
+
+/* ─── Special Form Sections ─── */
+[data-section-theme="zeitgeist"] { --section-accent: var(--disco-accent-teal); }
+[data-section-theme="ideology"] { --section-accent: var(--disco-accent-yellow); }
+[data-section-theme="lineage"] { --section-accent: #a78bfa; }
+[data-section-theme="legacy"] { --section-accent: var(--disco-accent-orange); }
+[data-section-theme="terminology"] { --section-accent: #06b6d4; }
+[data-section-theme="contributions"] { --section-accent: var(--disco-accent-orange); }
+[data-section-theme="institutional"] { --section-accent: var(--disco-accent-yellow); }
+
+.special-section {
+  border-color: var(--c-border);
+  /* Uses --section-accent for the top gradient line */
+}
+
+.special-section::before {
+  background: linear-gradient(90deg, transparent, var(--section-accent), transparent) !important;
+}
+
+/* Legacy Card Sub-themes */
+[data-legacy-type="shortTermSuccess"] { --legacy-accent: #22c55e; }
+[data-legacy-type="modernRelevance"] { --legacy-accent: var(--disco-accent-teal); }
+[data-legacy-type="criticalFlaw"] { --legacy-accent: #ef4444; }
+[data-legacy-type="personalSynthesis"] { --legacy-accent: var(--disco-accent-yellow); }
+
+.legacy-card__border { 
+  background-color: var(--legacy-accent) !important; 
+}
+.legacy-card__title { 
+  color: var(--legacy-accent) !important; 
 }

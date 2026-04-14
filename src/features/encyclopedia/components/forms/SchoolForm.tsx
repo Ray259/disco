@@ -27,10 +27,22 @@ export function SchoolForm({ onSuccess, onCancel, initialValues, editName }: Pro
     finally { setLoading(false); }
   };
 
-  const c = "#ef4444";
   return (
-    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "Update School" : "Create School"}>
-      <FormInput label="1. Designation" value={name} onChange={(e) => setName(e.target.value)} placeholder="ENTER IDEOLOGY..." color={c} />
+    <FormLayout 
+      onSubmit={handleSubmit} 
+      onCancel={onCancel} 
+      loading={loading} 
+      error={error} 
+      theme="SchoolOfThought" 
+      submitLabel={editName ? "Update School" : "Create School"}
+    >
+      <FormInput 
+        label="1. Designation" 
+        value={name} 
+        onChange={(e) => setName(e.target.value)} 
+        placeholder="ENTER IDEOLOGY..." 
+        themed 
+      />
       <RichContentEditor label="Description / Manifest" value={description} onChange={setDescription} placeholder="Attributes..." multiline />
     </FormLayout>
   );

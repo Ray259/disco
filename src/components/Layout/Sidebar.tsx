@@ -31,9 +31,11 @@ export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarPr
             <li key={item.id}>
               <button
                 onClick={() => onChangeView(item.id)}
-                className={`w-full text-left px-6 py-3 text-sm font-mono uppercase tracking-wider transition-colors
+                data-active={currentView === item.id}
+                data-view-id={item.id}
+                className={`sidebar-nav-button w-full text-left px-6 py-3 text-sm font-mono uppercase tracking-wider transition-colors
                   ${currentView === item.id 
-                    ? "text-white bg-[var(--c-deep)] border-r-2 border-[var(--disco-accent-orange)]" 
+                    ? "bg-[var(--c-deep)] border-r-2" 
                     : "text-[var(--c-muted)] hover:text-[#ccc] hover:bg-[var(--c-panel)]"
                   }`}
               >

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { createFigure, updateFigure, createGeo, SearchResult, ContentSegment } from "../../api";
-import { FormLayout, FormInput, TemporalCoordinates } from "./SharedFormComponents";
+import { FormLayout, FormInput, TemporalCoordinates, GeoPickerField } from "./SharedFormComponents";
 import { RichContentEditor } from "../RichContentEditor";
-import { extractSegments } from "../RichContentEditorTypes";
-import { RelationSearch } from "../RelationManager/RelationSearch";
+import { extractSegments, segmentsToPlainText } from "../RichContentEditorTypes";
 import { useFormState } from "../../../../hooks/useFormState";
 import {
   ZeitgeistField, ZeitgeistState, CoreIdeologyField, CoreIdeologyState,
@@ -45,37 +44,7 @@ const INITIAL: FigureFormState = {
   institutional: { fundingModel: "", institutionalProduct: "", successionPlan: "" },
 };
 
-function GeoPickerField({ value, onPick, onClear }: { value: string; onPick: (name: string) => void; onClear: () => void }) {
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  if (value) {
-    return (
-      <div>
-        <label className="block text-[10px] font-mono uppercase tracking-[0.2em] mb-1 text-[var(--disco-accent-purple)]">3. Geopolitical Origin</label>
-        <div className="flex items-center gap-2 border-b border-[var(--c-border)] py-2">
-          <span className="text-sm font-body text-[var(--disco-text-primary)] flex-1">{value}</span>
-          <button type="button" onClick={onClear} className="text-[9px] font-mono text-[var(--c-ghost)] hover:text-white uppercase tracking-wider">change</button>
-        </div>
-      </div>
-    );
-  }
-
-  const handleCreate = async (name: string) => {
-    setCreating(true); setError(null);
-    try { await createGeo({ name }); onPick(name); }
-    catch (err: any) { setError(err?.message || String(err)); }
-    finally { setCreating(false); }
-  };
-
-  return (
-    <div>
-      <RelationSearch label="3. Geopolitical Origin" placeholder="Search the ruinous past..." entityType="Geo"
-        onSelect={(r: SearchResult) => onPick(r.name)} allowCreate onCreateLabel={creating ? "Analyzing facts..." : undefined} onCreate={handleCreate} />
-      {error && <div className="text-[10px] font-mono text-red-400 mt-1">[ERROR] {error}</div>}
-    </div>
-  );
-}
 
 interface Props { onSuccess: () => void; onCancel: () => void; initialValues?: any; editName?: string; }
 
@@ -92,7 +61,7 @@ export function FigureForm({ onSuccess, onCancel, initialValues, editName }: Pro
         role: extractSegments(initialValues.primary_role),
         location: initialValues.primary_location
           ? (typeof initialValues.primary_location === "string" ? initialValues.primary_location
-              : initialValues.primary_location.segments?.map((s: any) => s.Text || "").join("") || "")
+              : segmentsToPlainText(extractSegments(initialValues.primary_location)))
           : "",
         quote: extractSegments(initialValues.defining_quote),
         startYear: extractYear(initialValues.life?.start),
@@ -110,7 +79,7 @@ export function FigureForm({ onSuccess, onCancel, initialValues, editName }: Pro
       const payload = {
         name: form.name,
         role: { segments: form.role },
-        location: { segments: form.location ? [{ Text: form.location }] : [] },
+        location: { segments: form.location ? [{ EntityRef: { entity_type: "Geo", display_text: form.location } }] : [] },
         start_year: form.startYear, end_year: form.endYear,
         quote: form.quote.length > 0 ? { segments: form.quote } : undefined,
       };
@@ -121,13 +90,26 @@ export function FigureForm({ onSuccess, onCancel, initialValues, editName }: Pro
     finally { setLoading(false); }
   };
 
-  const c = "var(--disco-accent-orange)";
   return (
-    <FormLayout onSubmit={handleSubmit} onCancel={onCancel} loading={loading} error={error} color={c} submitLabel={editName ? "[ RE-INTERNALIZE ]" : "[ INTERNALIZE ]"}>
-      <FormInput className="uppercase" label="1. Subject Designation" value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="WHO IS THIS MAN?..." color={c} />
+    <FormLayout 
+      onSubmit={handleSubmit} 
+      onCancel={onCancel} 
+      loading={loading} 
+      error={error} 
+      theme="Figure" 
+      submitLabel={editName ? "[ RE-INTERNALIZE ]" : "[ INTERNALIZE ]"}
+    >
+      <FormInput 
+        className="uppercase" 
+        label="1. Subject Designation" 
+        value={form.name} 
+        onChange={(e) => setField("name", e.target.value)} 
+        placeholder="WHO IS THIS MAN?..." 
+        themed
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <RichContentEditor label="2. Primary Archetype" value={form.role} onChange={(segs) => setField("role", segs)} placeholder="Philosopher, Painter, Lunatic..." />
-        <GeoPickerField value={form.location} onPick={(name) => setField("location", name)} onClear={() => setField("location", "")} />
+        <GeoPickerField label="3. Geopolitical Origin" value={form.location} onPick={(name) => setField("location", name)} onClear={() => setField("location", "")} />
       </div>
       <RichContentEditor label="4. Significant Utterance" value={form.quote} onChange={(segs) => setField("quote", segs)} placeholder="&ldquo;...&rdquo;" multiline />
       <TemporalCoordinates startYear={form.startYear} endYear={form.endYear} onStartChange={(v) => setField("startYear", v)} onEndChange={(v) => setField("endYear", v)} />

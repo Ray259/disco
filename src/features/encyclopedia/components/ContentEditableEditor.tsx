@@ -434,6 +434,7 @@ function MentionPopup({
         <div
           key={`${r.entity_type}-${r.name}`}
           className={`rich-editor__popup-item ${i === selectedIdx ? "rich-editor__popup-item--selected" : ""}`}
+          data-entity-type={r.entity_type}
           onMouseDown={(e) => {
             e.preventDefault(); // prevent blur
             onSelect(r);
@@ -443,6 +444,9 @@ function MentionPopup({
           <span className="rich-editor__popup-type">{r.entity_type}</span>
         </div>
       ))}
+      <div className="rich-editor__popup-hint">
+        &uarr;&darr; navigate &middot; Enter / Tab to select &middot; Esc to dismiss
+      </div>
     </div>
   );
 }
