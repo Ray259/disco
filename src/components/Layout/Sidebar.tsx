@@ -53,6 +53,7 @@ export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarPr
           onClick={onOpenSettings}
           className="p-2 text-[var(--c-muted)] hover:text-[#bfa275] transition-colors"
           title="Settings"
+          aria-label="Settings"
         >
           <SettingsIcon size={20} />
         </button>
