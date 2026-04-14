@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 export type EntityType = "figures" | "institutions" | "events" | "geos" | "works" | "schools";
 
@@ -13,10 +13,10 @@ export function useEncyclopediaNavigation() {
   const [view, setView] = useState<View>({ type: "list", entityType: "figures" });
   return {
     view,
-    navigateToList: (et: EntityType) => setView({ type: "list", entityType: et }),
-    navigateToDetail: (et: EntityType, name: string) => setView({ type: "detail", entityType: et, name }),
-    navigateToCreate: (initialType?: string) => setView({ type: "create", initialType }),
-    navigateToEdit: (et: EntityType, name: string) => setView({ type: "edit", entityType: et, name }),
-    navigateToCrew: () => setView({ type: "crew" }),
+    navigateToList: useCallback((et: EntityType) => setView({ type: "list", entityType: et }), []),
+    navigateToDetail: useCallback((et: EntityType, name: string) => setView({ type: "detail", entityType: et, name }), []),
+    navigateToCreate: useCallback((initialType?: string) => setView({ type: "create", initialType }), []),
+    navigateToEdit: useCallback((et: EntityType, name: string) => setView({ type: "edit", entityType: et, name }), []),
+    navigateToCrew: useCallback(() => setView({ type: "crew" }), []),
   };
 }

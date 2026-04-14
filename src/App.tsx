@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { SettingsUI } from "./components/SettingsUI";
 import { Sidebar } from "./components/Layout/Sidebar";
 import { EntityDetail } from "./features/encyclopedia/components/EntityDetail";
@@ -49,17 +49,19 @@ function App() {
     }
   };
 
-  const handleSidebarChange = (id: string) => {
+  const handleSidebarChange = useCallback((id: string) => {
     if (id === "crew") {
       navigateToCrew();
     } else {
       navigateToList(id as NavEntityType);
     }
-  };
+  }, [navigateToCrew, navigateToList]);
+
+  const handleOpenSettings = useCallback(() => setShowSettings(true), []);
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/library_hero.jpg')", backgroundColor: "var(--disco-bg)" }}>
-      <Sidebar currentView={view.type === "list" ? view.entityType : view.type === "crew" ? "crew" : ""} onChangeView={handleSidebarChange} onOpenSettings={() => setShowSettings(true)} />
+      <Sidebar currentView={view.type === "list" ? view.entityType : view.type === "crew" ? "crew" : ""} onChangeView={handleSidebarChange} onOpenSettings={handleOpenSettings} />
       <main className="flex-1 h-full relative overflow-hidden">{renderContent()}</main>
       {showSettings && <SettingsUI volume={volume} isMuted={isMuted} onVolumeChange={setVolume} onMuteToggle={() => setIsMuted(!isMuted)} onClose={() => setShowSettings(false)} />}
       <audio ref={audioRef} src="/audio/tiger_king.mp3" autoPlay loop style={{ display: "none" }} />

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Settings as SettingsIcon } from "lucide-react";
 
 interface SidebarProps {
@@ -6,17 +7,17 @@ interface SidebarProps {
   onOpenSettings: () => void;
 }
 
-export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarProps) {
-  const menuItems = [
-    { id: "figures", label: "Inhabitants" },
-    { id: "institutions", label: "Institutions" },
-    { id: "events", label: "History" },
-    { id: "geos", label: "Geography" },
-    { id: "works", label: "Bibliography" },
-    { id: "schools", label: "Schools of Thought" },
-    { id: "crew", label: "Agentic Crew" },
-  ];
+const MENU_ITEMS = [
+  { id: "figures", label: "Inhabitants" },
+  { id: "institutions", label: "Institutions" },
+  { id: "events", label: "History" },
+  { id: "geos", label: "Geography" },
+  { id: "works", label: "Bibliography" },
+  { id: "schools", label: "Schools of Thought" },
+  { id: "crew", label: "Agentic Crew" },
+];
 
+export const Sidebar = memo(function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarProps) {
   return (
     <div className="w-64 h-full bg-[#111]/80 backdrop-blur-sm border-r border-[var(--c-border)] flex flex-col">
       <div className="p-6 border-b border-[var(--c-border)]">
@@ -27,7 +28,7 @@ export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarPr
       
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1">
-          {menuItems.map((item) => (
+          {MENU_ITEMS.map((item) => (
             <li key={item.id}>
               <button
                 onClick={() => onChangeView(item.id)}
@@ -61,4 +62,4 @@ export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarPr
       </div>
     </div>
   );
-}
+});
