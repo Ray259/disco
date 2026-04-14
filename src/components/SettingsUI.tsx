@@ -77,7 +77,8 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
         
         <button 
            onClick={onClose}
-           className="absolute top-4 right-4 text-[var(--c-muted)] hover:text-white transition-colors z-50 p-1"
+           aria-label="Close settings"
+           className="absolute top-4 right-4 text-[var(--c-muted)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded transition-colors z-50 p-1"
         >
            <X size={24} />
         </button>
