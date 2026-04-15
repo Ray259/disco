@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { SettingsUI } from "./components/SettingsUI";
 import { Sidebar } from "./components/Layout/Sidebar";
 import { EntityDetail } from "./features/encyclopedia/components/EntityDetail";
@@ -19,9 +19,19 @@ function App() {
 
   useEffect(() => { if (audioRef.current) { audioRef.current.volume = volume; audioRef.current.muted = isMuted; } }, [volume, isMuted]);
 
-  const getName = (item: any) => item.name || item.title || "";
+  const getName = useCallback((item: any) => item.name || item.title || "", []);
 
-  const renderContent = () => {
+  const handleSidebarChange = useCallback((id: string) => {
+    if (id === "crew") {
+      navigateToCrew();
+    } else {
+      navigateToList(id as NavEntityType);
+    }
+  }, [navigateToCrew, navigateToList]);
+
+  const handleOpenSettings = useCallback(() => setShowSettings(true), []);
+
+  const content = useMemo(() => {
     switch (view.type) {
       case "create":
         return <EntityCreate initialType={view.initialType as any} onSuccess={() => navigateToList("figures")} onCancel={() => navigateToList("figures")} />;
@@ -47,21 +57,16 @@ function App() {
       case "crew":
         return <CrewTerminal />;
     }
-  };
+  }, [view, navigateToList, navigateToDetail, navigateToCreate, navigateToEdit, getName]);
 
-  const handleSidebarChange = (id: string) => {
-    if (id === "crew") {
-      navigateToCrew();
-    } else {
-      navigateToList(id as NavEntityType);
-    }
-  };
+  const handleCloseSettings = useCallback(() => setShowSettings(false), []);
+  const handleMuteToggle = useCallback(() => setIsMuted(prev => !prev), []);
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/library_hero.jpg')", backgroundColor: "var(--disco-bg)" }}>
-      <Sidebar currentView={view.type === "list" ? view.entityType : view.type === "crew" ? "crew" : ""} onChangeView={handleSidebarChange} onOpenSettings={() => setShowSettings(true)} />
-      <main className="flex-1 h-full relative overflow-hidden">{renderContent()}</main>
-      {showSettings && <SettingsUI volume={volume} isMuted={isMuted} onVolumeChange={setVolume} onMuteToggle={() => setIsMuted(!isMuted)} onClose={() => setShowSettings(false)} />}
+      <Sidebar currentView={view.type === "list" ? view.entityType : view.type === "crew" ? "crew" : ""} onChangeView={handleSidebarChange} onOpenSettings={handleOpenSettings} />
+      <main className="flex-1 h-full relative overflow-hidden">{content}</main>
+      {showSettings && <SettingsUI volume={volume} isMuted={isMuted} onVolumeChange={setVolume} onMuteToggle={handleMuteToggle} onClose={handleCloseSettings} />}
       <audio ref={audioRef} src="/audio/tiger_king.mp3" autoPlay loop style={{ display: "none" }} />
     </div>
   );

@@ -1,3 +1,4 @@
+import React from "react";
 import { Settings as SettingsIcon } from "lucide-react";
 
 interface SidebarProps {
@@ -6,7 +7,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
 }
 
-export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarProps) {
+export const Sidebar = React.memo(function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarProps) {
   const menuItems = [
     { id: "figures", label: "Inhabitants" },
     { id: "institutions", label: "Institutions" },
@@ -61,4 +62,4 @@ export function Sidebar({ currentView, onChangeView, onOpenSettings }: SidebarPr
       </div>
     </div>
   );
-}
+});
