@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { createFigure, updateFigure, createGeo, SearchResult, ContentSegment } from "../../api";
+import { createFigure, updateFigure, ContentSegment } from "../../api";
 import { FormLayout, FormInput, TemporalCoordinates, GeoPickerField } from "./SharedFormComponents";
 import { RichContentEditor } from "../RichContentEditor";
 import { extractSegments, segmentsToPlainText } from "../RichContentEditorTypes";
