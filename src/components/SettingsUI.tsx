@@ -77,7 +77,8 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
         
         <button 
            onClick={onClose}
-           className="absolute top-4 right-4 text-[var(--c-muted)] hover:text-white transition-colors z-50 p-1"
+           aria-label="Close settings"
+           className="absolute top-4 right-4 text-[var(--c-muted)] hover:text-white focus-visible:ring-2 focus-visible:ring-white transition-colors z-50 p-1 outline-none"
         >
            <X size={24} />
         </button>
@@ -110,8 +111,9 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
                             type="range" 
                             min="0" max="1" step="0.01" 
                             value={volume}
+                            aria-label="Music volume"
                             onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                            className="w-full max-w-[150px] appearance-none bg-transparent outline-none m-0 p-0" 
+                            className="w-full max-w-[150px] appearance-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-dim)] m-0 p-0"
                         />
                         <span className="ml-2 text-xl font-sans text-[var(--c-muted)] leading-none">)</span>
                       </td>
@@ -122,7 +124,10 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
                       <td className="w-[55%] text-left py-3 pl-4 flex items-center text-[#dedede]">
                          <button 
                             onClick={onMuteToggle}
-                            className="w-5 h-5 flex items-center justify-center bg-white hover:bg-white/80 transition-colors"
+                            role="switch"
+                            aria-checked={isMuted}
+                            aria-label="Mute all audio"
+                            className="w-5 h-5 flex items-center justify-center bg-white hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white outline-none transition-colors"
                          >
                             {!isMuted && <div className="w-full h-full bg-[#111] border border-white" />}
                          </button>
