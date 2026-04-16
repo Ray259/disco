@@ -98,7 +98,7 @@ impl VaultManager {
     #[tracing::instrument(skip(self, db))]
     pub async fn sync_single_file(&self, path: &Path, db: &EncyclopediaDb) -> Result<(), String> {
         tracing::debug!(path = %path.display(), "Syncing single file");
-        let content = fs::read_to_string(path)
+        let content = tokio::fs::read_to_string(path).await
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
         let parsed = markdown_to_entity_data(&content)?;
         let file_path_str = path.to_string_lossy().to_string();
@@ -109,7 +109,7 @@ impl VaultManager {
 
     /// Converts an entity to markdown and writes it to the vault.
     #[tracing::instrument(skip(self, entity))]
-    pub fn write_entity<E: DomainEntity + MarkdownSerializable>(&self, entity: &E) -> Result<PathBuf, String> {
+    pub async fn write_entity<E: DomainEntity + MarkdownSerializable>(&self, entity: &E) -> Result<PathBuf, String> {
         tracing::info!(name = %entity.name(), "Writing entity to vault");
         let vault_path = self.vault_path.as_ref()
             .ok_or("No vault directory configured. Please select one in Settings.")?;
@@ -117,7 +117,7 @@ impl VaultManager {
         let filename = format!("{}.md", safe_filename(&entity.name()));
         let path = dir.join(&filename);
         let content = entity_to_markdown(entity);
-        fs::write(&path, &content).map_err(|e| format!("Failed to write {}: {}", path.display(), e))?;
+        tokio::fs::write(&path, &content).await.map_err(|e| format!("Failed to write {}: {}", path.display(), e))?;
         tracing::debug!(path = %path.display(), "Write complete");
         Ok(path)
     }
@@ -129,7 +129,7 @@ impl VaultManager {
         if let Some(file_path) = db.get_entity_file_path(entity_type, name).await.map_err(|e| e.to_string())? {
             let path = Path::new(&file_path);
             if path.exists() {
-                fs::remove_file(path).map_err(|e| format!("Failed to delete {}: {}", path.display(), e))?;
+                tokio::fs::remove_file(path).await.map_err(|e| format!("Failed to delete {}: {}", path.display(), e))?;
                 tracing::debug!(%file_path, "File removed");
             }
         }
@@ -155,16 +155,17 @@ impl VaultManager {
         let mut count = 0u32;
         let all = db.search_entities("").await.map_err(|e| e.to_string())?;
         for (type_str, _name, data) in all {
-            let result = match type_str.as_str() {
-                "Figure" => serde_json::from_str::<Figure>(&data).ok().map(|e| self.write_entity(&e)),
-                "Event" => serde_json::from_str::<Event>(&data).ok().map(|e| self.write_entity(&e)),
-                "Institution" => serde_json::from_str::<Institution>(&data).ok().map(|e| self.write_entity(&e)),
-                "Work" => serde_json::from_str::<Work>(&data).ok().map(|e| self.write_entity(&e)),
-                "Geo" => serde_json::from_str::<Geo>(&data).ok().map(|e| self.write_entity(&e)),
-                "SchoolOfThought" => serde_json::from_str::<SchoolOfThought>(&data).ok().map(|e| self.write_entity(&e)),
-                _ => None,
+            let mut exported = false;
+            match type_str.as_str() {
+                "Figure" => if let Ok(e) = serde_json::from_str::<Figure>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
+                "Event" => if let Ok(e) = serde_json::from_str::<Event>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
+                "Institution" => if let Ok(e) = serde_json::from_str::<Institution>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
+                "Work" => if let Ok(e) = serde_json::from_str::<Work>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
+                "Geo" => if let Ok(e) = serde_json::from_str::<Geo>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
+                "SchoolOfThought" => if let Ok(e) = serde_json::from_str::<SchoolOfThought>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
+                _ => {},
             };
-            if let Some(Ok(_)) = result { count += 1; }
+            if exported { count += 1; }
         }
         Ok(count)
     }

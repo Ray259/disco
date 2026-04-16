@@ -37,7 +37,7 @@ where
     state.insert_entity(entity.entity_type(), &name, &data)
         .await.map_err(|e| e.to_string())?;
 
-    match vault.write_entity(&entity) {
+    match vault.write_entity(&entity).await {
         Ok(path) => {
             let fp = path.to_string_lossy().to_string();
             let _ = state.upsert_entity(entity.entity_type(), &name, &data, &fp).await;
@@ -84,7 +84,7 @@ where
         state.update_entity(entity_type, &name, &data).await.map_err(|e| e.to_string())?;
     }
 
-    match vault.write_entity(&entity) {
+    match vault.write_entity(&entity).await {
         Ok(path) => {
             let fp = path.to_string_lossy().to_string();
             let _ = state.upsert_entity(entity_type, &new_name, &data, &fp).await;
