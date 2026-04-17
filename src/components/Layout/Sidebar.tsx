@@ -56,6 +56,7 @@ export const Sidebar = React.memo(function Sidebar({ currentView, onChangeView, 
           onClick={onOpenSettings}
           className="p-2 text-[var(--c-muted)] hover:text-[#bfa275] transition-colors"
           title="Settings"
+          aria-label="Settings"
         >
           <SettingsIcon size={20} />
         </button>
