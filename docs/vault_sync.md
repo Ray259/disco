@@ -5,21 +5,23 @@ This document describes how data is synced between the SQLite database `encyclop
 ## 1. Storage Components
 
 ### SQLite Database (`entities` table)
-- `id` (TEXT PRIMARY KEY): UUID v4.
 - `entity_type` (TEXT): Entity category.
 - `name` (TEXT): Entity name.
 - `data` (TEXT): JSON representation of the entity struct.
 - `file_path` (TEXT): Absolute path to the corresponding `.md` file.
 
+*Note: `(entity_type, name)` serves as the composite PRIMARY KEY.*
+
 ### Markdown Files (`[Vault]/[Type]/[Name].md`)
 1. **YAML Frontmatter**
-   - Contains: `id`, `entity_type`, `name`, `created_at`, `updated_at`.
+   - Contains: `entity_type`, `name`, `created_at`, `updated_at`.
    - Contains: All custom fields for the struct (e.g. `life`, `date_range`).
    - Contains: A `relations` array. Example:
      ```yaml
      relations:
        - target:
-           entity_id: 123e4567-e89b-12d3-a456-426614174000
+           entity_type: Figure
+           display_text: Klaasje
          kind: !Fixed Mentorship
      ```
 2. **Markdown Body**
@@ -33,14 +35,14 @@ When a `.md` file is processed:
 2. The YAML string is parsed into a JSON object (`serde_yaml::from_str`).
 3. The body string is inserted into the JSON object at the correct field.
 4. The JSON object is serialized to a string (`data`).
-5. Returns `(id, entity_type, name, data, file_path)`.
+5. Returns `(entity_type, name, data)`.
 
 ## 3. Saving to SQLite (`sync_single_file`)
 
 `VaultManager::sync_single_file` takes the parsed data and executes:
-1. `db.upsert_entity(id, type, name, data, file_path)`: Uses `INSERT OR REPLACE` to save the JSON blob `data`.
-2. `db.clear_outgoing_relations(id)`: Deletes previous relations where `from_id = id`.
-3. `db.insert_relation(id, target_id, kind)`: Re-inserts rows into the `relations` table by iterating over the `relations` array inside the JSON blob.
+1. `db.upsert_entity(type, name, data, file_path)`: Uses `INSERT OR REPLACE` to save the JSON blob `data`.
+2. `db.clear_outgoing_relations(type, name)`: Deletes previous relations where `from_type = type AND from_name = name`.
+3. `db.insert_relation(type, name, target_type, target_name, kind)`: Re-inserts rows into the `relations` table by iterating over the `relations` array inside the JSON blob.
 
 ## 4. File Watcher (`watcher.rs`)
 

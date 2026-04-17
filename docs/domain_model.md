@@ -12,7 +12,6 @@ The most complex entity, representing a person with historical significance.
 ### Struct Definition
 ```rust
 pub struct Figure {
-    pub id: Uuid,
     pub name: String,
     
     // Lifecycle
@@ -66,7 +65,6 @@ Organizations, governments, companies.
 ### Struct Definition
 ```rust
 pub struct Institution {
-    pub id: Uuid,
     pub name: String,
     
     pub founded: Option<DateRange>,
@@ -91,7 +89,6 @@ Moments in history.
 ### Struct Definition
 ```rust
 pub struct Event {
-    pub id: Uuid,
     pub name: String,
     
     pub date_range: DateRange,
@@ -115,7 +112,6 @@ Books, Art, Theories.
 ### Struct Definition
 ```rust
 pub struct Work {
-    pub id: Uuid,
     pub title: String, // Note: mapped to `name` in DB index
     
     pub authors: Vec<EntityRef>,
@@ -137,7 +133,6 @@ Locations, Cities, Regions.
 ### Struct Definition
 ```rust
 pub struct Geo {
-    pub id: Uuid,
     pub name: String,
     
     pub region: Option<RichContent>, // Broad container (e.g. "Insulinde")
@@ -157,7 +152,6 @@ Ideologies (Communism, Moralism, Ultraliberalism).
 ### Struct Definition
 ```rust
 pub struct SchoolOfThought {
-    pub id: Uuid,
     pub name: String,
     
     pub sub_schools: Vec<String>, // e.g. "Mazovian Socio-Economics"
