@@ -4,23 +4,26 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-pub mod core;
 mod commands;
-use std::sync::Arc;
-use std::path::PathBuf;
-use tauri::Manager;
+pub mod core;
+use crate::core::claude_bridge;
+use crate::core::codex_bridge;
 use crate::core::db::EncyclopediaDb;
+use crate::core::gemini_bridge;
 use crate::core::vault::VaultManager;
 use crate::core::watcher;
 use crate::core::watcher::WatcherHandle;
-use crate::core::claude_bridge;
-use crate::core::gemini_bridge;
-use crate::core::codex_bridge;
+use std::path::PathBuf;
+use std::sync::Arc;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env().add_directive(tracing::Level::INFO.into()))
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive(tracing::Level::INFO.into()),
+        )
         .init();
 
     tracing::info!("Starting DIS application...");
@@ -28,21 +31,30 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
-                let db_path = "sqlite:encyclopedia.db?mode=rwc"; 
-                let db = EncyclopediaDb::init(db_path).await.expect("failed to init db");
-                
+                let db_path = "sqlite:encyclopedia.db?mode=rwc";
+                let db = EncyclopediaDb::init(db_path)
+                    .await
+                    .expect("failed to init db");
+
                 // Get app data dir for config storage
-                let app_data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
-                
+                let app_data_dir = app
+                    .path()
+                    .app_data_dir()
+                    .unwrap_or_else(|_| PathBuf::from("."));
+
                 // Initialize vault manager (loads config or defaults)
                 let vault = VaultManager::new(app_data_dir, None).expect("failed to init vault");
-                
+
                 // Startup sync: load any vault files into SQLite
                 match vault.full_sync(&db).await {
-                    Ok(report) => if report.synced > 0 { tracing::info!("[vault] Startup sync: {} files synced", report.synced); },
+                    Ok(report) => {
+                        if report.synced > 0 {
+                            tracing::info!("[vault] Startup sync: {} files synced", report.synced);
+                        }
+                    }
                     Err(e) => tracing::error!("[vault] Startup sync error: {}", e),
                 }
-                
+
                 // Start file watcher for live sync with Obsidian
                 let vault_arc = Arc::new(vault.clone());
                 let db_arc = Arc::new(db.clone());
@@ -54,7 +66,7 @@ pub fn run() {
                     }
                     Err(e) => tracing::error!("[vault] Failed to start file watcher: {}", e),
                 }
-                
+
                 app.manage(db);
                 app.manage(vault);
                 app.manage(claude_bridge::init_claude_state());
@@ -131,7 +143,7 @@ async fn set_vault_path(
     app: tauri::AppHandle,
     vault: tauri::State<'_, VaultManager>,
     db: tauri::State<'_, EncyclopediaDb>,
-    new_path: String
+    new_path: String,
 ) -> Result<(), String> {
     let path_buf = PathBuf::from(&new_path);
     if !path_buf.exists() || !path_buf.is_dir() {
@@ -140,7 +152,10 @@ async fn set_vault_path(
 
     app.unmanage::<WatcherHandle>();
 
-    let app_data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| PathBuf::from("."));
     let new_vault = VaultManager::new(app_data_dir, Some(path_buf.clone()))?;
 
     let vault_files: Vec<_> = std::fs::read_dir(&path_buf)
@@ -149,30 +164,45 @@ async fn set_vault_path(
     let new_vault_has_md_files = vault_files.iter().any(|entry: &std::fs::DirEntry| {
         entry.path().is_dir() && {
             std::fs::read_dir(entry.path())
-                .map(|e| e.filter_map(|e| e.ok())
-                    .any(|f| f.path().extension().map_or(false, |ext| ext == "md")))
+                .map(|e| {
+                    e.filter_map(|e| e.ok())
+                        .any(|f| f.path().extension().map_or(false, |ext| ext == "md"))
+                })
                 .unwrap_or(false)
         }
     });
 
     if !new_vault_has_md_files {
         match new_vault.export_all_from_db(&db).await {
-            Ok(count) if count > 0 => tracing::info!("[vault] Exported {} existing entities into new vault", count),
+            Ok(count) if count > 0 => tracing::info!(
+                "[vault] Exported {} existing entities into new vault",
+                count
+            ),
             Ok(_) => tracing::info!("[vault] No pre-existing entities to export"),
             Err(e) => tracing::error!("[vault] Export error: {}", e),
         }
     }
 
     if let Err(e) = db.empty_database().await {
-         return Err(format!("Failed to clear database before switching vaults: {}", e));
+        return Err(format!(
+            "Failed to clear database before switching vaults: {}",
+            e
+        ));
     }
 
-    let app_data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| PathBuf::from("."));
     let new_vault = VaultManager::new(app_data_dir, Some(path_buf.clone()))?;
 
     match new_vault.full_sync(&db).await {
         Ok(report) => {
-            tracing::info!("[vault] Changed path to {}. Synced {} files.", new_path, report.synced);
+            tracing::info!(
+                "[vault] Changed path to {}. Synced {} files.",
+                new_path,
+                report.synced
+            );
         }
         Err(e) => return Err(format!("Failed to sync new vault: {}", e)),
     }

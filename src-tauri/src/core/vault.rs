@@ -1,11 +1,11 @@
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::core::db::EncyclopediaDb;
 use crate::core::domain::traits::DomainEntity;
 use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::markdown::{
-    entity_to_markdown, markdown_to_entity_data, safe_filename, entity_type_dir,
+    entity_to_markdown, entity_type_dir, markdown_to_entity_data, safe_filename,
     MarkdownSerializable,
 };
 
@@ -33,7 +33,9 @@ impl VaultManager {
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
                 if let Some(path_str) = json.get("vault_path").and_then(|v| v.as_str()) {
                     let path = PathBuf::from(path_str);
-                    if path.exists() && path.is_dir() { return Some(path); }
+                    if path.exists() && path.is_dir() {
+                        return Some(path);
+                    }
                 }
             }
         }
@@ -43,27 +45,46 @@ impl VaultManager {
     /// Saves the current vault path to the config file.
     pub fn save_config(&self) -> Result<(), String> {
         let config_path = Self::get_config_path(&self.app_data_dir);
-        let path_str = self.vault_path.as_ref().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
+        let path_str = self
+            .vault_path
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
         let config = serde_json::json!({ "vault_path": path_str });
-        if let Some(parent) = config_path.parent() { let _ = fs::create_dir_all(parent); }
+        if let Some(parent) = config_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
         fs::write(&config_path, serde_json::to_string_pretty(&config).unwrap())
             .map_err(|e| format!("Failed to save config: {}", e))
     }
 
     /// Creates a new VaultManager and sets up entity directories.
-    pub fn new(app_data_dir: PathBuf, explicit_vault_path: Option<PathBuf>) -> Result<Self, String> {
+    pub fn new(
+        app_data_dir: PathBuf,
+        explicit_vault_path: Option<PathBuf>,
+    ) -> Result<Self, String> {
         let vault_path = explicit_vault_path.or_else(|| Self::load_config(&app_data_dir));
         let _ = fs::create_dir_all(&app_data_dir);
         if let Some(vp) = &vault_path {
             fs::create_dir_all(vp).map_err(|e| format!("Failed to create vault: {}", e))?;
-            let types = [EntityType::Figure, EntityType::Work, EntityType::Event,
-                         EntityType::Geo, EntityType::Institution, EntityType::SchoolOfThought];
+            let types = [
+                EntityType::Figure,
+                EntityType::Work,
+                EntityType::Event,
+                EntityType::Geo,
+                EntityType::Institution,
+                EntityType::SchoolOfThought,
+            ];
             for et in &types {
                 let dir = vp.join(entity_type_dir(et));
-                fs::create_dir_all(&dir).map_err(|e| format!("Failed to create {:?}: {}", dir, e))?;
+                fs::create_dir_all(&dir)
+                    .map_err(|e| format!("Failed to create {:?}: {}", dir, e))?;
             }
         }
-        let manager = Self { vault_path, app_data_dir };
+        let manager = Self {
+            vault_path,
+            app_data_dir,
+        };
         let _ = manager.save_config();
         Ok(manager)
     }
@@ -81,7 +102,9 @@ impl VaultManager {
             }
         };
         for entry in walkdir(vault_path) {
-            if entry.extension().map_or(true, |ext| ext != "md") { continue; }
+            if entry.extension().map_or(true, |ext| ext != "md") {
+                continue;
+            }
             match self.sync_single_file(&entry, db).await {
                 Ok(_) => report.synced += 1,
                 Err(e) => {
@@ -90,7 +113,11 @@ impl VaultManager {
                 }
             }
         }
-        tracing::info!(synced = report.synced, errors = report.errors.len(), "Full vault sync complete");
+        tracing::info!(
+            synced = report.synced,
+            errors = report.errors.len(),
+            "Full vault sync complete"
+        );
         Ok(report)
     }
 
@@ -98,38 +125,63 @@ impl VaultManager {
     #[tracing::instrument(skip(self, db))]
     pub async fn sync_single_file(&self, path: &Path, db: &EncyclopediaDb) -> Result<(), String> {
         tracing::debug!(path = %path.display(), "Syncing single file");
-        let content = tokio::fs::read_to_string(path).await
+        let content = tokio::fs::read_to_string(path)
+            .await
             .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
         let parsed = markdown_to_entity_data(&content)?;
         let file_path_str = path.to_string_lossy().to_string();
-        db.upsert_entity(parsed.entity_type, &parsed.name, &parsed.data, &file_path_str)
-            .await.map_err(|e| e.to_string())?;
+        db.upsert_entity(
+            parsed.entity_type,
+            &parsed.name,
+            &parsed.data,
+            &file_path_str,
+        )
+        .await
+        .map_err(|e| e.to_string())?;
         Ok(())
     }
 
     /// Converts an entity to markdown and writes it to the vault.
     #[tracing::instrument(skip(self, entity))]
-    pub async fn write_entity<E: DomainEntity + MarkdownSerializable>(&self, entity: &E) -> Result<PathBuf, String> {
+    pub async fn write_entity<E: DomainEntity + MarkdownSerializable>(
+        &self,
+        entity: &E,
+    ) -> Result<PathBuf, String> {
         tracing::info!(name = %entity.name(), "Writing entity to vault");
-        let vault_path = self.vault_path.as_ref()
+        let vault_path = self
+            .vault_path
+            .as_ref()
             .ok_or("No vault directory configured. Please select one in Settings.")?;
         let dir = vault_path.join(entity_type_dir(&entity.entity_type()));
         let filename = format!("{}.md", safe_filename(&entity.name()));
         let path = dir.join(&filename);
         let content = entity_to_markdown(entity);
-        tokio::fs::write(&path, &content).await.map_err(|e| format!("Failed to write {}: {}", path.display(), e))?;
+        tokio::fs::write(&path, &content)
+            .await
+            .map_err(|e| format!("Failed to write {}: {}", path.display(), e))?;
         tracing::debug!(path = %path.display(), "Write complete");
         Ok(path)
     }
 
     /// Deletes an entity's markdown file from the vault.
     #[tracing::instrument(skip(self, db))]
-    pub async fn delete_entity_file(&self, entity_type: EntityType, name: &str, db: &EncyclopediaDb) -> Result<(), String> {
+    pub async fn delete_entity_file(
+        &self,
+        entity_type: EntityType,
+        name: &str,
+        db: &EncyclopediaDb,
+    ) -> Result<(), String> {
         tracing::info!(%entity_type, name, "Deleting entity file from vault");
-        if let Some(file_path) = db.get_entity_file_path(entity_type, name).await.map_err(|e| e.to_string())? {
+        if let Some(file_path) = db
+            .get_entity_file_path(entity_type, name)
+            .await
+            .map_err(|e| e.to_string())?
+        {
             let path = Path::new(&file_path);
             if path.exists() {
-                tokio::fs::remove_file(path).await.map_err(|e| format!("Failed to delete {}: {}", path.display(), e))?;
+                tokio::fs::remove_file(path)
+                    .await
+                    .map_err(|e| format!("Failed to delete {}: {}", path.display(), e))?;
                 tracing::debug!(%file_path, "File removed");
             }
         }
@@ -137,35 +189,79 @@ impl VaultManager {
     }
 
     /// Deletes an entity from the database when its file is removed.
-    pub async fn handle_file_deleted(&self, path: &Path, db: &EncyclopediaDb) -> Result<(), String> {
+    pub async fn handle_file_deleted(
+        &self,
+        path: &Path,
+        db: &EncyclopediaDb,
+    ) -> Result<(), String> {
         let file_path_str = path.to_string_lossy().to_string();
-        db.delete_entity_by_file_path(&file_path_str).await.map_err(|e| e.to_string())?;
+        db.delete_entity_by_file_path(&file_path_str)
+            .await
+            .map_err(|e| e.to_string())?;
         Ok(())
     }
 
     /// Writes all entities from the database out to markdown files in the vault.
     pub async fn export_all_from_db(&self, db: &EncyclopediaDb) -> Result<u32, String> {
-        use crate::core::domain::models::figure::Figure;
         use crate::core::domain::models::event::Event;
-        use crate::core::domain::models::institution::Institution;
-        use crate::core::domain::models::work::Work;
+        use crate::core::domain::models::figure::Figure;
         use crate::core::domain::models::geo::Geo;
+        use crate::core::domain::models::institution::Institution;
         use crate::core::domain::models::school_of_thought::SchoolOfThought;
+        use crate::core::domain::models::work::Work;
 
         let mut count = 0u32;
         let all = db.search_entities("").await.map_err(|e| e.to_string())?;
         for (type_str, _name, data) in all {
             let mut exported = false;
             match type_str.as_str() {
-                "Figure" => if let Ok(e) = serde_json::from_str::<Figure>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
-                "Event" => if let Ok(e) = serde_json::from_str::<Event>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
-                "Institution" => if let Ok(e) = serde_json::from_str::<Institution>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
-                "Work" => if let Ok(e) = serde_json::from_str::<Work>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
-                "Geo" => if let Ok(e) = serde_json::from_str::<Geo>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
-                "SchoolOfThought" => if let Ok(e) = serde_json::from_str::<SchoolOfThought>(&data) { if self.write_entity(&e).await.is_ok() { exported = true; } },
-                _ => {},
+                "Figure" => {
+                    if let Ok(e) = serde_json::from_str::<Figure>(&data) {
+                        if self.write_entity(&e).await.is_ok() {
+                            exported = true;
+                        }
+                    }
+                }
+                "Event" => {
+                    if let Ok(e) = serde_json::from_str::<Event>(&data) {
+                        if self.write_entity(&e).await.is_ok() {
+                            exported = true;
+                        }
+                    }
+                }
+                "Institution" => {
+                    if let Ok(e) = serde_json::from_str::<Institution>(&data) {
+                        if self.write_entity(&e).await.is_ok() {
+                            exported = true;
+                        }
+                    }
+                }
+                "Work" => {
+                    if let Ok(e) = serde_json::from_str::<Work>(&data) {
+                        if self.write_entity(&e).await.is_ok() {
+                            exported = true;
+                        }
+                    }
+                }
+                "Geo" => {
+                    if let Ok(e) = serde_json::from_str::<Geo>(&data) {
+                        if self.write_entity(&e).await.is_ok() {
+                            exported = true;
+                        }
+                    }
+                }
+                "SchoolOfThought" => {
+                    if let Ok(e) = serde_json::from_str::<SchoolOfThought>(&data) {
+                        if self.write_entity(&e).await.is_ok() {
+                            exported = true;
+                        }
+                    }
+                }
+                _ => {}
             };
-            if exported { count += 1; }
+            if exported {
+                count += 1;
+            }
         }
         Ok(count)
     }
@@ -185,9 +281,15 @@ fn walkdir(dir: &Path) -> Vec<PathBuf> {
         for entry in entries.flatten() {
             let path = entry.path();
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with('.') { continue; }
+                if name.starts_with('.') {
+                    continue;
+                }
             }
-            if path.is_dir() { files.extend(walkdir(&path)); } else { files.push(path); }
+            if path.is_dir() {
+                files.extend(walkdir(&path));
+            } else {
+                files.push(path);
+            }
         }
     }
     files

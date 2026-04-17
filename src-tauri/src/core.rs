@@ -1,9 +1,9 @@
-pub mod domain;
-pub mod graph;
+pub mod claude_bridge;
+pub mod codex_bridge;
 pub mod db;
+pub mod domain;
+pub mod gemini_bridge;
+pub mod graph;
 pub mod markdown;
 pub mod vault;
 pub mod watcher;
-pub mod claude_bridge;
-pub mod gemini_bridge;
-pub mod codex_bridge;

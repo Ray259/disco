@@ -1,6 +1,6 @@
-use tauri::State;
 use crate::core::db::EncyclopediaDb;
 use serde::Serialize;
+use tauri::State;
 
 #[derive(Serialize)]
 pub struct SearchResult {
@@ -8,9 +8,22 @@ pub struct SearchResult {
     pub name: String,
 }
 
+/// Performs a search query on the database to find matching entities.
+/// Requires the query to be at least 2 characters long.
 #[tauri::command]
-pub async fn search_entities(state: State<'_, EncyclopediaDb>, query: String) -> Result<Vec<SearchResult>, String> {
-    if query.len() < 2 { return Ok(Vec::new()); }
-    let results = state.search_entities(&query).await.map_err(|e| e.to_string())?;
-    Ok(results.into_iter().map(|(entity_type, name, _data)| SearchResult { entity_type, name }).collect())
+pub async fn search_entities(
+    state: State<'_, EncyclopediaDb>,
+    query: String,
+) -> Result<Vec<SearchResult>, String> {
+    if query.len() < 2 {
+        return Ok(Vec::new());
+    }
+    let results = state
+        .search_entities(&query)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(results
+        .into_iter()
+        .map(|(entity_type, name, _data)| SearchResult { entity_type, name })
+        .collect())
 }
