@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::fs;
+use std::collections::VecDeque;
 
 use crate::core::db::EncyclopediaDb;
 use crate::core::domain::traits::DomainEntity;
@@ -80,7 +81,7 @@ impl VaultManager {
                 return Ok(report);
             }
         };
-        for entry in walkdir(vault_path) {
+        for entry in walkdir_async(vault_path).await {
             if entry.extension().map_or(true, |ext| ext != "md") { continue; }
             match self.sync_single_file(&entry, db).await {
                 Ok(_) => report.synced += 1,
@@ -178,17 +179,30 @@ pub struct SyncReport {
     pub errors: Vec<String>,
 }
 
-/// Recursively gets all absolute file paths in a directory.
-fn walkdir(dir: &Path) -> Vec<PathBuf> {
+/// Recursively gets all absolute file paths in a directory without blocking the thread.
+async fn walkdir_async(dir: &Path) -> Vec<PathBuf> {
     let mut files = Vec::new();
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with('.') { continue; }
+    let mut queue = VecDeque::new();
+    queue.push_back(dir.to_path_buf());
+
+    while let Some(current_dir) = queue.pop_front() {
+        if let Ok(mut entries) = tokio::fs::read_dir(current_dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let path = entry.path();
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.starts_with('.') { continue; }
+                }
+
+                if let Ok(file_type) = entry.file_type().await {
+                    if file_type.is_dir() {
+                        queue.push_back(path);
+                    } else {
+                        files.push(path);
+                    }
+                }
             }
-            if path.is_dir() { files.extend(walkdir(&path)); } else { files.push(path); }
         }
     }
+
     files
 }
