@@ -16,28 +16,27 @@
 **Cost**: O(1) + JSON Serialization overhead.
 **SQL**:
 ```sql
-INSERT INTO entities (id, entity_type, name, data, created_at, updated_at) 
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO entities (entity_type, name, data, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5)
 ```
-*   `$1 (id)`: `Uuid::to_string()`
-*   `$2 (entity_type)`: `EntityType::to_string()` (e.g., "Figure")
-*   `$3 (name)`: Copied from struct to allow SQL-level indexing.
-*   `$4 (data)`: `serde_json::to_string(&entity)`
+*   `$1 (entity_type)`: `EntityType::to_string()` (e.g., "Figure")
+*   `$2 (name)`: Copied from struct to allow SQL-level indexing.
+*   `$3 (data)`: `serde_json::to_string(&entity)`
 
 ### 2.2. Listing Entities
 **Cost**: O(N) where N is number of entities of that type.
 **SQL**:
 ```sql
-SELECT id, name, data FROM entities WHERE entity_type = $1 ORDER BY name
+SELECT name, data FROM entities WHERE entity_type = $1 ORDER BY name
 ```
-*   **Index Usage**: `idx_entities_type` is used to filter.
+*   **Index Usage**: `idx_entities_name` is used to filter by name.
 *   **Deserialization**: `parse_figure` is called N times. This is the primary bottleneck for large datasets (10k+ items).
 
 ### 2.3. Fetching Single Entity
 **Cost**: O(1) (Primary Key Lookup).
 **SQL**:
 ```sql
-SELECT entity_type, name, data FROM entities WHERE id = $1
+SELECT data FROM entities WHERE entity_type = $1 AND name = $2
 ```
 
 ## 3. The Relation Graph
@@ -46,20 +45,20 @@ SELECT entity_type, name, data FROM entities WHERE id = $1
 ```sql
 CREATE TABLE relations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    from_id TEXT NOT NULL,
-    to_id TEXT NOT NULL,
-    relation_type TEXT NOT NULL,
-    FOREIGN KEY (from_id) REFERENCES entities(id),
-    FOREIGN KEY (to_id) REFERENCES entities(id)
+    from_type TEXT NOT NULL,
+    from_name TEXT NOT NULL,
+    to_type TEXT NOT NULL,
+    to_name TEXT NOT NULL,
+    relation_type TEXT NOT NULL
 )
 ```
 
 ### Graph Traversal (Planned)
 To find "All Students of Figure X":
-1.  **SQL**: `SELECT from_id FROM relations WHERE to_id = $1 AND relation_type = 'STUDENT_OF'`
+1.  **SQL**: `SELECT from_type, from_name FROM relations WHERE to_type = $1 AND to_name = $2 AND relation_type = 'STUDENT_OF'`
 2.  **Index**: Uses `idx_relations_to`.
-3.  **Result**: Returns List of UUIDs.
-4.  **Hydration**: Must run `SELECT * FROM entities WHERE id IN (...)` to get the actual student data.
+3.  **Result**: Returns List of entity types and names.
+4.  **Hydration**: Must run `SELECT data FROM entities WHERE entity_type = ... AND name = ...` to get the actual student data.
 
 ## 4. Schema Evolution & Limitations
 *   **Refactoring Fields**: If you rename a field in `Figure` struct (e.g. `role` -> `job`), old JSON blobs in the DB will fail to deserialize.

@@ -15,10 +15,10 @@ Used by all entity commands that accept date strings.
 ### `handle_create<E, D>(state, vault, request) -> Result<String, String>`
 Generic create pipeline: DTO → Entity → serialize → SQLite insert → relation insert → vault markdown write.
 
-### `handle_update<E, D>(state, vault, id, request) -> Result<String, String>`
+### `handle_update<E, D>(state, vault, entity_type, name, request) -> Result<String, String>`
 Generic update pipeline: fetch → deserialize → apply DTO → serialize → SQLite update → rebuild relations → vault re-write.
 
-### `delete_entity(state, vault, id) -> Result<String, String>`
+### `delete_entity(state, vault, entity_type, name) -> Result<String, String>`
 Deletes entity from SQLite and removes vault markdown file.
 
 ---
@@ -39,11 +39,11 @@ struct CreateFigureRequest {
 ```
 Delegates to `handle_create`.
 
-### `update_figure(state, vault, id, request)`
+### `update_figure(state, vault, name, request)`
 Same DTO. Delegates to `handle_update`.
 
 ### `get_all_figures(state) -> Vec<Figure>`
-### `get_figure(state, id) -> Option<Figure>`
+### `get_figure(state, name) -> Option<Figure>`
 
 ---
 
@@ -59,8 +59,10 @@ struct CreateInstitutionRequest {
     relations: Option<Vec<RelationDto>>,
 }
 ```
+Note: `update_institution` is keyed by `name` not `id`.
 
 ### `get_all_institutions` / `get_institution`
+Note: `get_institution` is keyed by `name` not `id`.
 
 ---
 
@@ -76,8 +78,10 @@ struct CreateEventRequest {
     relations: Option<Vec<RelationDto>>,
 }
 ```
+Note: `update_event` is keyed by `name` not `id`.
 
 ### `get_all_events` / `get_event`
+Note: `get_event` is keyed by `name` not `id`.
 
 ---
 
@@ -85,8 +89,10 @@ struct CreateEventRequest {
 
 ### `create_geo` / `update_geo`
 Input: `{ name, region?, description?, relations? }`
+Note: `update_geo` is keyed by `name` not `id`.
 
 ### `get_all_geos` / `get_geo`
+Note: `get_geo` is keyed by `name` not `id`.
 
 ---
 
@@ -94,8 +100,10 @@ Input: `{ name, region?, description?, relations? }`
 
 ### `create_work` / `update_work`
 Input: `{ title, summary?, relations? }`
+Note: `update_work` is keyed by `name` not `id`.
 
 ### `get_all_works` / `get_work`
+Note: `get_work` is keyed by `name` not `id`.
 
 ---
 
@@ -103,8 +111,10 @@ Input: `{ title, summary?, relations? }`
 
 ### `create_school_of_thought` / `update_school_of_thought`
 Input: `{ name, description?, relations? }`
+Note: `update_school_of_thought` is keyed by `name` not `id`.
 
 ### `get_all_schools_of_thought` / `get_school_of_thought`
+Note: `get_school_of_thought` is keyed by `name` not `id`.
 
 ---
 
@@ -113,10 +123,8 @@ Input: `{ name, description?, relations? }`
 ### `search_entities(query) -> Vec<SearchResult>`
 ```rust
 struct SearchResult {
-    id: Uuid,
-    name: String,
     entity_type: String,
-    description: Option<String>,
+    name: String,
 }
 ```
 SQL LIKE search across all entity types.
