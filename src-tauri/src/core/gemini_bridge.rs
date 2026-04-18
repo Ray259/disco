@@ -96,8 +96,8 @@ async fn load_latest_gemini_history(app: AppHandle, _working_dir: std::path::Pat
     let project_name = _working_dir.file_name().and_then(|n| n.to_str()).unwrap_or("unknown").to_lowercase();
     println!("[gemini_bridge] >>> Scoping history search to project family: {}", project_name);
 
-    if let Ok(projects) = fs::read_dir(&root_session_dir) {
-        for project in projects.flatten() {
+    if let Ok(mut projects) = tokio::fs::read_dir(&root_session_dir).await {
+        while let Ok(Some(project)) = projects.next_entry().await {
             let name = project.file_name().to_string_lossy().to_lowercase();
             // Only look into projects that start with our name (case-insensitive)
             let is_match = name == project_name || name.starts_with(&format!("{}-", project_name));
@@ -109,10 +109,10 @@ async fn load_latest_gemini_history(app: AppHandle, _working_dir: std::path::Pat
             let mut chat_dir = project.path();
             chat_dir.push("chats");
             if chat_dir.exists() {
-                if let Ok(sessions) = fs::read_dir(&chat_dir) {
-                    for session in sessions.flatten() {
+                if let Ok(mut sessions) = tokio::fs::read_dir(&chat_dir).await {
+                    while let Ok(Some(session)) = sessions.next_entry().await {
                         if session.path().extension().map_or(false, |e| e == "json") {
-                            if let Ok(metadata) = session.metadata() {
+                            if let Ok(metadata) = session.metadata().await {
                                 if let Ok(mtime) = metadata.modified() {
                                     if mtime > latest_time {
                                         latest_time = mtime;
@@ -129,7 +129,7 @@ async fn load_latest_gemini_history(app: AppHandle, _working_dir: std::path::Pat
 
     if let Some(path) = latest_file {
         println!("[gemini_bridge] >>> AUTO-RECOVERY: Loading true latest session from: {:?}", path);
-        let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let content = tokio::fs::read_to_string(&path).await.map_err(|e| e.to_string())?;
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
             if let Some(messages) = json.get("messages").and_then(|v| v.as_array()) {
                 for msg in messages {

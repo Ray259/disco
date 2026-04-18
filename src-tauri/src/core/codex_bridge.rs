@@ -89,21 +89,24 @@ async fn load_latest_codex_history(app: AppHandle, _working_dir: PathBuf) -> Res
     let project_name = _working_dir.file_name().and_then(|n| n.to_str()).unwrap_or("unknown").to_lowercase();
     println!("[codex_bridge] >>> Scoping history search to project family: {}", project_name);
 
-    let mut latest_file = None;
-    let mut latest_time = std::time::SystemTime::UNIX_EPOCH;
+    use std::time::SystemTime;
 
-    fn find_latest_in_dir(dir: &std::path::Path, latest_file: &mut Option<PathBuf>, latest_time: &mut std::time::SystemTime) {
-        if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries.flatten() {
+    let mut dirs_to_visit = vec![root_session_dir];
+    let mut latest_file = None;
+    let mut latest_time = SystemTime::UNIX_EPOCH;
+
+    while let Some(dir) = dirs_to_visit.pop() {
+        if let Ok(mut entries) = tokio::fs::read_dir(&dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
                 let path = entry.path();
                 if path.is_dir() {
-                    find_latest_in_dir(&path, latest_file, latest_time);
+                    dirs_to_visit.push(path);
                 } else if path.extension().map_or(false, |e| e == "jsonl") {
-                    if let Ok(metadata) = entry.metadata() {
+                    if let Ok(metadata) = entry.metadata().await {
                         if let Ok(mtime) = metadata.modified() {
-                            if mtime > *latest_time {
-                                *latest_time = mtime;
-                                *latest_file = Some(path);
+                            if mtime > latest_time {
+                                latest_time = mtime;
+                                latest_file = Some(path);
                             }
                         }
                     }
@@ -112,11 +115,9 @@ async fn load_latest_codex_history(app: AppHandle, _working_dir: PathBuf) -> Res
         }
     }
 
-    find_latest_in_dir(&root_session_dir, &mut latest_file, &mut latest_time);
-
     if let Some(path) = latest_file {
         println!("[codex_bridge] >>> AUTO-RECOVERY: Loading latest session from: {:?}", path);
-        let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let content = tokio::fs::read_to_string(&path).await.map_err(|e| e.to_string())?;
         
         for line in content.lines() {
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
