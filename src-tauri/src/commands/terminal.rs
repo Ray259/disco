@@ -1,5 +1,5 @@
-use tauri::State;
 use crate::core::vault::VaultManager;
+use tauri::State;
 
 #[tauri::command]
 pub async fn launch_terminal_session(
@@ -7,8 +7,12 @@ pub async fn launch_terminal_session(
     provider: String,
     session_id: String,
 ) -> Result<(), String> {
-    let vault_path = vault.vault_path.clone()
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")))
+    let vault_path = vault
+        .vault_path
+        .clone()
+        .unwrap_or_else(|| {
+            std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+        })
         .to_string_lossy()
         .to_string();
 
@@ -17,7 +21,11 @@ pub async fn launch_terminal_session(
     } else if provider == "gemini" {
         format!("gemini --resume {}", session_id)
     } else {
-        let codex_id = if session_id == "latest" { "--last".to_string() } else { session_id };
+        let codex_id = if session_id == "latest" {
+            "--last".to_string()
+        } else {
+            session_id
+        };
         format!("codex resume {}", codex_id)
     };
 

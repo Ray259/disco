@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityRef;
-use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
+use crate::core::domain::values::rich_content::RichContent;
 
 /// An institution or organization.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,18 +23,30 @@ impl Institution {
     pub fn new(name: String) -> Self {
         let now = chrono::Utc::now();
         Self {
-            name, location_ref: None, founded: None, description: None,
-            founders: Vec::new(), products: Vec::new(),
-            relations: Vec::new(), created_at: now, updated_at: now,
+            name,
+            location_ref: None,
+            founded: None,
+            description: None,
+            founders: Vec::new(),
+            products: Vec::new(),
+            relations: Vec::new(),
+            created_at: now,
+            updated_at: now,
         }
     }
 }
 
-use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::traits::DomainEntity;
+use crate::core::domain::values::entity_ref::EntityType;
 
 impl DomainEntity for Institution {
-    fn entity_type(&self) -> EntityType { EntityType::Institution }
-    fn name(&self) -> String { self.name.clone() }
-    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) { self.updated_at = date; }
+    fn entity_type(&self) -> EntityType {
+        EntityType::Institution
+    }
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) {
+        self.updated_at = date;
+    }
 }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
+use crate::core::domain::values::rich_content::RichContent;
 
 /// A geographic location or region.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,18 +19,28 @@ impl Geo {
     pub fn new(name: String) -> Self {
         let now = chrono::Utc::now();
         Self {
-            name, region: None, description: None,
-            aliases: Vec::new(), relations: Vec::new(),
-            created_at: now, updated_at: now,
+            name,
+            region: None,
+            description: None,
+            aliases: Vec::new(),
+            relations: Vec::new(),
+            created_at: now,
+            updated_at: now,
         }
     }
 }
 
-use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::traits::DomainEntity;
+use crate::core::domain::values::entity_ref::EntityType;
 
 impl DomainEntity for Geo {
-    fn entity_type(&self) -> EntityType { EntityType::Geo }
-    fn name(&self) -> String { self.name.clone() }
-    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) { self.updated_at = date; }
+    fn entity_type(&self) -> EntityType {
+        EntityType::Geo
+    }
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) {
+        self.updated_at = date;
+    }
 }
