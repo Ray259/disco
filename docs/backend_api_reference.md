@@ -15,10 +15,10 @@ Used by all entity commands that accept date strings.
 ### `handle_create<E, D>(state, vault, request) -> Result<String, String>`
 Generic create pipeline: DTO → Entity → serialize → SQLite insert → relation insert → vault markdown write.
 
-### `handle_update<E, D>(state, vault, id, request) -> Result<String, String>`
+### `handle_update<E, D>(state, vault, entity_type, name, request) -> Result<String, String>`
 Generic update pipeline: fetch → deserialize → apply DTO → serialize → SQLite update → rebuild relations → vault re-write.
 
-### `delete_entity(state, vault, id) -> Result<String, String>`
+### `delete_entity(state, vault, entity_type, name) -> Result<String, String>`
 Deletes entity from SQLite and removes vault markdown file.
 
 ---
@@ -39,11 +39,11 @@ struct CreateFigureRequest {
 ```
 Delegates to `handle_create`.
 
-### `update_figure(state, vault, id, request)`
+### `update_figure(state, vault, name, request)`
 Same DTO. Delegates to `handle_update`.
 
 ### `get_all_figures(state) -> Vec<Figure>`
-### `get_figure(state, id) -> Option<Figure>`
+### `get_figure(state, name) -> Option<Figure>`
 
 ---
 
@@ -113,10 +113,8 @@ Input: `{ name, description?, relations? }`
 ### `search_entities(query) -> Vec<SearchResult>`
 ```rust
 struct SearchResult {
-    id: Uuid,
-    name: String,
-    entity_type: String,
-    description: Option<String>,
+    pub entity_type: String,
+    pub name: String,
 }
 ```
 SQL LIKE search across all entity types.

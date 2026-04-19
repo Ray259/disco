@@ -12,9 +12,8 @@ The most complex entity, representing a person with historical significance.
 ### Struct Definition
 ```rust
 pub struct Figure {
-    pub id: Uuid,
     pub name: String,
-    
+
     // Lifecycle
     pub life: DateRange, 
     pub created_at: DateTime<Utc>,
@@ -53,7 +52,7 @@ pub struct Figure {
 ```
 
 ### Sub-Types
-*   **`MajorContribution`**: `{ title: String, date: DateRange, impact: RichContent }`
+*   **`MajorContribution`**: `{ title: String, entity_ref: Option<EntityRef>, date: DateRange, impact: RichContent }`
 *   **`Zeitgeist`**: Enum/Struct defining the "spirit of the age" they belong to.
 
 ---
@@ -66,16 +65,15 @@ Organizations, governments, companies.
 ### Struct Definition
 ```rust
 pub struct Institution {
-    pub id: Uuid,
     pub name: String,
-    
+
     pub founded: Option<DateRange>,
     pub location_ref: Option<EntityRef>, // Head Office
     pub description: Option<RichContent>,
-    
+
     pub founders: Vec<EntityRef>,    // Links to Figures
     pub products: Vec<RichContent>,  // What they produce (Laws, Cars, Ideas)
-    
+
     pub relations: Vec<Relation>,
     // ... timestamps
 }
@@ -91,16 +89,15 @@ Moments in history.
 ### Struct Definition
 ```rust
 pub struct Event {
-    pub id: Uuid,
     pub name: String,
-    
+
     pub date_range: DateRange,
     pub location_ref: Option<EntityRef>,
-    
+
     pub participants: Vec<EntityRef>, // Who was there
     pub causes: Vec<RichContent>,     // Why it happened
     pub consequences: Vec<RichContent>, // What happened after
-    
+
     // ... relations & timestamps
 }
 ```
@@ -115,14 +112,13 @@ Books, Art, Theories.
 ### Struct Definition
 ```rust
 pub struct Work {
-    pub id: Uuid,
     pub title: String, // Note: mapped to `name` in DB index
-    
+
     pub authors: Vec<EntityRef>,
     pub publication_date: Option<DateRange>,
     pub summary: Option<RichContent>,
     pub key_ideas: Vec<RichContent>,
-    
+
     // ... relations & timestamps
 }
 ```
@@ -137,12 +133,11 @@ Locations, Cities, Regions.
 ### Struct Definition
 ```rust
 pub struct Geo {
-    pub id: Uuid,
     pub name: String,
-    
+
     pub region: Option<RichContent>, // Broad container (e.g. "Insulinde")
     pub aliases: Vec<String>,        // e.g. "Martinase"
-    
+
     // ... relations & timestamps
 }
 ```
@@ -157,11 +152,10 @@ Ideologies (Communism, Moralism, Ultraliberalism).
 ### Struct Definition
 ```rust
 pub struct SchoolOfThought {
-    pub id: Uuid,
     pub name: String,
-    
+
     pub sub_schools: Vec<String>, // e.g. "Mazovian Socio-Economics"
-    
+
     // ... relations & timestamps
 }
 ```
