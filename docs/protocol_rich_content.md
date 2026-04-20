@@ -67,7 +67,7 @@ The `serde` default for Enums is **External Tagging**.
 
 ## 5. Current Input Gap
 
-All form inputs are plain `<input>` / `<textarea>` — they produce strings converted via `RichContent::from_text()` (single `Text` segment). There is **no UI** for inserting `EntityRef` or `DateRef` inline.
+All form inputs are plain `<input>` / `<textarea>` - they produce strings converted via `RichContent::from_text()` (single `Text` segment). There is **no UI** for inserting `EntityRef` or `DateRef` inline.
 
 ## 6. Future: RichContentEditor
 
@@ -75,12 +75,12 @@ Planned approach is an **@mention**-style inline editor:
 1. User types normally in a rich text field
 2. Typing `@` triggers a search popup (reusing `RelationSearch`)
 3. Selecting an entity inserts an inline chip representing an `EntityRef` segment
-4. The editor state maps to `ContentSegment[]` — mix of `Text` and `EntityRef`
+4. The editor state maps to `ContentSegment[]` - mix of `Text` and `EntityRef`
 
 ### Implementation needs
 - `RichContentEditor` component (contenteditable or lightweight editor lib)
 - Inline entity chips (styled, clickable, deletable)
-- Serializer: editor state → `ContentSegment[]`
-- Deserializer: `ContentSegment[]` → editor state (for edit mode)
+- Serializer: editor state -> `ContentSegment[]`
+- Deserializer: `ContentSegment[]` -> editor state (for edit mode)
 - Replace `FormInput`/`FormTextArea` with `RichContentEditor` for relevant fields
 

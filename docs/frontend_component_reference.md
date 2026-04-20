@@ -5,7 +5,7 @@
 ## 1. Core Components
 
 ### `EntityCreate.tsx`
-Page controller for create/edit. Driven by `ENTITY_CONFIG` — maps entity types to form components.
+Page controller for create/edit. Driven by `ENTITY_CONFIG` - maps entity types to form components.
 - `activeKey`: current entity tab
 - Passes `extraRelations`, `initialValues`, `editId` to form components
 - Renders `RelationManager` below the form
@@ -17,7 +17,7 @@ Reusable list view for any entity type. Props: `title`, `fetcher`, `renderItem`.
 View page for a single Figure. Uses `RichContentDisplay` for text fields.
 
 ### `RichContentDisplay.tsx`
-Renders `RichContent` segments — discriminates `Text` | `EntityRef` | `DateRef`. EntityRef renders as a `Link`.
+Renders `RichContent` segments - discriminates `Text` | `EntityRef` | `DateRef`. EntityRef renders as a `Link`.
 
 ---
 
@@ -25,7 +25,7 @@ Renders `RichContent` segments — discriminates `Text` | `EntityRef` | `DateRef
 
 ### `FormLayout`
 Common form wrapper. Handles error display, submit/cancel buttons.
-- **Sticky buttons**: Internalize/Discard bar is `sticky bottom-0` with backdrop blur — floats at viewport bottom when scrolled past.
+- **Sticky buttons**: Internalize/Discard bar is `sticky bottom-0` with backdrop blur - floats at viewport bottom when scrolled past.
 
 ### `FormInput` / `FormTextArea`
 Styled inputs with label. Accept standard HTML input props.
@@ -39,13 +39,13 @@ Start/end date picker block using `DatePicker`.
 
 ### Flexible date input
 Accepts three formats:
-- `YYYY` — year only (precision badge: YEAR)
-- `YYYY-MM` — year-month (precision badge: MONTH)
-- `YYYY-MM-DD` — full date (precision badge: DAY)
+- `YYYY` - year only (precision badge: YEAR)
+- `YYYY-MM` - year-month (precision badge: MONTH)
+- `YYYY-MM-DD` - full date (precision badge: DAY)
 
 ### Calendar interactions
-- Click a day → sets YYYY-MM-DD
-- Click the month header (e.g. "MAR 2025") → sets YYYY-MM
+- Click a day -> sets YYYY-MM-DD
+- Click the month header (e.g. "MAR 2025") -> sets YYYY-MM
 - Type directly in the text input for any format
 
 ---
@@ -76,7 +76,7 @@ Uses `useFormState` hook (reducer-based). Fields: `name`, `role`, `location`, `q
 
 ### GeoPickerField (local component)
 Handles the origin/location field. Two states:
-- **Empty**: Shows `RelationSearch` filtered to Geo entities with `allowCreate`. When "+ Create" is clicked, calls `createGeo` API — onPick only fires on success.
+- **Empty**: Shows `RelationSearch` filtered to Geo entities with `allowCreate`. When "+ Create" is clicked, calls `createGeo` API - onPick only fires on success.
 - **Filled**: Shows selected name with "change" button to clear.
 
 Stores `locationId` for future EntityRef wiring.
@@ -102,7 +102,7 @@ Special fields are **not** included in the payload yet.
 
 ## 6. Other Forms
 
-All forms follow the same pattern: local state → API call on submit → `FormLayout` wrapper.
+All forms follow the same pattern: local state -> API call on submit -> `FormLayout` wrapper.
 
 - **EventForm**: `name`, `start_date`, `end_date`, `description`
 - **InstitutionForm**: `name`, `founded_start`, `founded_end`, `description`
@@ -125,5 +125,5 @@ Thin wrappers around Tauri `invoke`. Each function types its argument and return
 
 ### `useFormState<T>(initial)` (`hooks/useFormState.ts`)
 Reducer-based form state management. Returns `[state, setField, resetForm]`.
-- `setField(field, value)` — updates a single field
-- `resetForm(newState)` — replaces entire state
+- `setField(field, value)` - updates a single field
+- `resetForm(newState)` - replaces entire state
