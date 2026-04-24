@@ -80,7 +80,9 @@ impl VaultManager {
                 return Ok(report);
             }
         };
-        for entry in walkdir(vault_path) {
+
+        // Optimization: Wait for async directory traversal to complete before processing files
+        for entry in walkdir(vault_path).await {
             if entry.extension().map_or(true, |ext| ext != "md") { continue; }
             match self.sync_single_file(&entry, db).await {
                 Ok(_) => report.synced += 1,
@@ -178,16 +180,27 @@ pub struct SyncReport {
     pub errors: Vec<String>,
 }
 
-/// Recursively gets all absolute file paths in a directory.
-fn walkdir(dir: &Path) -> Vec<PathBuf> {
+/// Iteratively gets all absolute file paths in a directory using async I/O.
+/// Optimization: Uses a stack-based approach with tokio::fs::read_dir to prevent blocking
+/// the async executor and avoid recursive memory overhead.
+async fn walkdir(dir: &Path) -> Vec<PathBuf> {
     let mut files = Vec::new();
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with('.') { continue; }
+    let mut stack = vec![dir.to_path_buf()];
+
+    while let Some(current_dir) = stack.pop() {
+        if let Ok(mut entries) = tokio::fs::read_dir(current_dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let path = entry.path();
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.starts_with('.') { continue; }
+                }
+
+                if path.is_dir() {
+                    stack.push(path);
+                } else {
+                    files.push(path);
+                }
             }
-            if path.is_dir() { files.extend(walkdir(&path)); } else { files.push(path); }
         }
     }
     files
