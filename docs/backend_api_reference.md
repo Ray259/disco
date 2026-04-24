@@ -59,8 +59,10 @@ struct CreateInstitutionRequest {
     relations: Option<Vec<RelationDto>>,
 }
 ```
+Note: `update_institution` is keyed by `name` not `id`.
 
 ### `get_all_institutions` / `get_institution`
+Note: `get_institution` is keyed by `name` not `id`.
 
 ---
 
@@ -76,8 +78,10 @@ struct CreateEventRequest {
     relations: Option<Vec<RelationDto>>,
 }
 ```
+Note: `update_event` is keyed by `name` not `id`.
 
 ### `get_all_events` / `get_event`
+Note: `get_event` is keyed by `name` not `id`.
 
 ---
 
@@ -85,8 +89,10 @@ struct CreateEventRequest {
 
 ### `create_geo` / `update_geo`
 Input: `{ name, region?, description?, relations? }`
+Note: `update_geo` is keyed by `name` not `id`.
 
 ### `get_all_geos` / `get_geo`
+Note: `get_geo` is keyed by `name` not `id`.
 
 ---
 
@@ -94,8 +100,10 @@ Input: `{ name, region?, description?, relations? }`
 
 ### `create_work` / `update_work`
 Input: `{ title, summary?, relations? }`
+Note: `update_work` is keyed by `name` not `id`.
 
 ### `get_all_works` / `get_work`
+Note: `get_work` is keyed by `name` not `id`.
 
 ---
 
@@ -103,8 +111,10 @@ Input: `{ title, summary?, relations? }`
 
 ### `create_school_of_thought` / `update_school_of_thought`
 Input: `{ name, description?, relations? }`
+Note: `update_school_of_thought` is keyed by `name` not `id`.
 
 ### `get_all_schools_of_thought` / `get_school_of_thought`
+Note: `get_school_of_thought` is keyed by `name` not `id`.
 
 ---
 

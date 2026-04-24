@@ -29,7 +29,7 @@ VALUES ($1, $2, $3, $4, $5)
 ```sql
 SELECT name, data FROM entities WHERE entity_type = $1 ORDER BY name
 ```
-*   **Index Usage**: `idx_entities_type` is used to filter.
+*   **Index Usage**: `idx_entities_name` is used to filter by name.
 *   **Deserialization**: `parse_figure` is called N times. This is the primary bottleneck for large datasets (10k+ items).
 
 ### 2.3. Fetching Single Entity

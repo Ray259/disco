@@ -33,7 +33,6 @@ The `serde` default for Enums is **External Tagging**.
     { 
       "EntityRef": { 
         "entity_type": "Geo",
-        "entity_id": "a1b2c3d4-...",
         "display_text": "Revachol"
       } 
     },
@@ -52,7 +51,7 @@ The `serde` default for Enums is **External Tagging**.
 *   **Input**: `RichContent::from_text(s)` creates a single `Text` segment.
 *   **Parsing**: There is currently **NO** default parser for Markdown-like syntax (e.g., `[Link](...)`).
     *   *Implication*: Content created via the current API is always "Plain Text" wrapped in the struct.
-    *   *Future*: A parser command will be needed to convert `[Revachol](geo:uuid)` strings into `ContentSegment::EntityRef`.
+    *   *Future*: A parser command will be needed to convert `[Revachol](geo:name)` strings into `ContentSegment::EntityRef`.
 
 ## 4. Rendering Logic (Frontend)
 *   **Component**: `src/features/encyclopedia/components/RichContentDisplay.tsx`
@@ -60,7 +59,7 @@ The `serde` default for Enums is **External Tagging**.
     ```typescript
     props.content.segments.map((segment) => {
       if ("Text" in segment) return <span>{segment.Text}</span>;
-      if ("EntityRef" in segment) return <Link to={`/entity/${segment.EntityRef.entity_id}`}>{segment.EntityRef.display_text}</Link>;
+      if ("EntityRef" in segment) return <Link to={`/entity/${segment.EntityRef.entity_type}/${segment.EntityRef.display_text}`}>{segment.EntityRef.display_text}</Link>;
       // ...
     })
     ```
