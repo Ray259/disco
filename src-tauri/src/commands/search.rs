@@ -8,6 +8,8 @@ pub struct SearchResult {
     pub name: String,
 }
 
+/// Executes a case-insensitive search across all entities.
+/// Returns a list of matching entities or an empty list if the query is too short.
 #[tauri::command]
 pub async fn search_entities(state: State<'_, EncyclopediaDb>, query: String) -> Result<Vec<SearchResult>, String> {
     if query.len() < 2 { return Ok(Vec::new()); }

@@ -28,12 +28,16 @@ impl InputDto<SchoolOfThought> for CreateSchoolOfThoughtRequest {
     }
 }
 
+/// Retrieves all School of Thought entities from the database.
+/// Returns a list of deserialized SchoolOfThought objects.
 #[tauri::command]
 pub async fn get_all_schools_of_thought(state: State<'_, EncyclopediaDb>) -> Result<Vec<SchoolOfThought>, String> {
     let rows = state.list_entities(Some(EntityType::SchoolOfThought)).await.map_err(|e| e.to_string())?;
     rows.into_iter().map(|(_name, data)| serde_json::from_str(&data).map_err(|e| e.to_string())).collect()
 }
 
+/// Fetches a specific School of Thought by its unique name.
+/// Returns the parsed entity if found, or None if it does not exist.
 #[tauri::command]
 pub async fn get_school_of_thought(state: State<'_, EncyclopediaDb>, name: String) -> Result<Option<SchoolOfThought>, String> {
     match state.get_entity(EntityType::SchoolOfThought, &name).await.map_err(|e| e.to_string())? {
@@ -42,11 +46,15 @@ pub async fn get_school_of_thought(state: State<'_, EncyclopediaDb>, name: Strin
     }
 }
 
+/// Creates a new School of Thought entity from the provided request payload.
+/// Persists the entity to both the SQLite database and the Markdown vault.
 #[tauri::command]
 pub async fn create_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
     handle_create(state, vault, request).await
 }
 
+/// Updates an existing School of Thought entity.
+/// Replaces current data with the request payload and re-syncs the changes to the vault.
 #[tauri::command]
 pub async fn update_school_of_thought(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, name: String, request: CreateSchoolOfThoughtRequest) -> Result<String, String> {
     handle_update(state, vault, EntityType::SchoolOfThought, name, request).await
