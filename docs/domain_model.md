@@ -75,7 +75,8 @@ pub struct Institution {
     pub products: Vec<RichContent>,  // What they produce (Laws, Cars, Ideas)
 
     pub relations: Vec<Relation>,
-    // ... timestamps
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -92,13 +93,16 @@ pub struct Event {
     pub name: String,
 
     pub date_range: DateRange,
+    pub description: Option<RichContent>,
     pub location_ref: Option<EntityRef>,
 
     pub participants: Vec<EntityRef>, // Who was there
     pub causes: Vec<RichContent>,     // Why it happened
     pub consequences: Vec<RichContent>, // What happened after
-
-    // ... relations & timestamps
+    
+    pub relations: Vec<Relation>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -118,8 +122,10 @@ pub struct Work {
     pub publication_date: Option<DateRange>,
     pub summary: Option<RichContent>,
     pub key_ideas: Vec<RichContent>,
-
-    // ... relations & timestamps
+    
+    pub relations: Vec<Relation>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -136,9 +142,12 @@ pub struct Geo {
     pub name: String,
 
     pub region: Option<RichContent>, // Broad container (e.g. "Insulinde")
+    pub description: Option<RichContent>,
     pub aliases: Vec<String>,        // e.g. "Martinase"
-
-    // ... relations & timestamps
+    
+    pub relations: Vec<Relation>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -153,9 +162,12 @@ Ideologies (Communism, Moralism, Ultraliberalism).
 ```rust
 pub struct SchoolOfThought {
     pub name: String,
-
+    
+    pub description: Option<RichContent>,
+    pub relations: Vec<Relation>,
     pub sub_schools: Vec<String>, // e.g. "Mazovian Socio-Economics"
-
-    // ... relations & timestamps
+    
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
