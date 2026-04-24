@@ -6,17 +6,17 @@
 
 ### `parse_flexible_date(s, field) -> Result<NaiveDate, String>`
 Accepts three date formats:
-1. `YYYY-MM-DD` (full) → parsed directly
-2. `YYYY-MM` (month) → day defaults to 01
-3. `YYYY` (year) → month+day default to 01-01
+1. `YYYY-MM-DD` (full) -> parsed directly
+2. `YYYY-MM` (month) -> day defaults to 01
+3. `YYYY` (year) -> month+day default to 01-01
 
 Used by all entity commands that accept date strings.
 
 ### `handle_create<E, D>(state, vault, request) -> Result<String, String>`
-Generic create pipeline: DTO → Entity → serialize → SQLite insert → relation insert → vault markdown write.
+Generic create pipeline: DTO -> Entity -> serialize -> SQLite insert -> relation insert -> vault markdown write.
 
-### `handle_update<E, D>(state, vault, entity_type, name, request) -> Result<String, String>`
-Generic update pipeline: fetch → deserialize → apply DTO → serialize → SQLite update → rebuild relations → vault re-write.
+### `handle_update<E, D>(state, vault, id, request) -> Result<String, String>`
+Generic update pipeline: fetch -> deserialize -> apply DTO -> serialize -> SQLite update -> rebuild relations -> vault re-write.
 
 ### `delete_entity(state, vault, entity_type, name) -> Result<String, String>`
 Deletes entity from SQLite and removes vault markdown file.
@@ -29,8 +29,8 @@ Deletes entity from SQLite and removes vault markdown file.
 ```rust
 struct CreateFigureRequest {
     name: String,
-    role: String,        // → RichContent
-    location: String,    // → RichContent
+    role: String,        // -> RichContent
+    location: String,    // -> RichContent
     start_year: String,  // flexible: YYYY, YYYY-MM, or YYYY-MM-DD
     end_year: String,    // flexible
     quote: Option<String>,
@@ -123,8 +123,8 @@ Note: `get_school_of_thought` is keyed by `name` not `id`.
 ### `search_entities(query) -> Vec<SearchResult>`
 ```rust
 struct SearchResult {
-    entity_type: String,
-    name: String,
+    pub entity_type: String,
+    pub name: String,
 }
 ```
 SQL LIKE search across all entity types.
@@ -135,7 +135,7 @@ SQL LIKE search across all entity types.
 
 ### `RichContent` (`rich_content.rs`)
 `Vec<ContentSegment>` where segment is `Text(String)` | `EntityRef(EntityRef)` | `DateRef(DateRange)`.
-- `from_text(str)` — creates single Text segment (current default for all form inputs).
+- `from_text(str)` - creates single Text segment (current default for all form inputs).
 
 ### `DateRange` (`date_range.rs`)
 `{ start: NaiveDate, end: NaiveDate }`.

@@ -33,7 +33,7 @@ SELECT name, data FROM entities WHERE entity_type = $1 ORDER BY name
 *   **Deserialization**: `parse_figure` is called N times. This is the primary bottleneck for large datasets (10k+ items).
 
 ### 2.3. Fetching Single Entity
-**Cost**: O(1) (Primary Key Lookup).
+**Cost**: O(1) (Composite Key Lookup).
 **SQL**:
 ```sql
 SELECT data FROM entities WHERE entity_type = $1 AND name = $2
@@ -57,8 +57,8 @@ CREATE TABLE relations (
 To find "All Students of Figure X":
 1.  **SQL**: `SELECT from_type, from_name FROM relations WHERE to_type = $1 AND to_name = $2 AND relation_type = 'STUDENT_OF'`
 2.  **Index**: Uses `idx_relations_to`.
-3.  **Result**: Returns List of entity types and names.
-4.  **Hydration**: Must run `SELECT data FROM entities WHERE entity_type = ... AND name = ...` to get the actual student data.
+3.  **Result**: Returns List of (EntityType, Name).
+4.  **Hydration**: Must run `SELECT * FROM entities WHERE entity_type = ... AND name = ...` to get the actual student data.
 
 ## 4. Schema Evolution & Limitations
 *   **Refactoring Fields**: If you rename a field in `Figure` struct (e.g. `role` -> `job`), old JSON blobs in the DB will fail to deserialize.

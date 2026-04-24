@@ -13,7 +13,7 @@ The most complex entity, representing a person with historical significance.
 ```rust
 pub struct Figure {
     pub name: String,
-    
+
     // Lifecycle
     pub life: DateRange, 
     pub created_at: DateTime<Utc>,
@@ -52,7 +52,7 @@ pub struct Figure {
 ```
 
 ### Sub-Types
-*   **`MajorContribution`**: `{ title: String, date: DateRange, impact: RichContent }`
+*   **`MajorContribution`**: `{ title: String, entity_ref: Option<EntityRef>, date: DateRange, impact: RichContent }`
 *   **`Zeitgeist`**: Enum/Struct defining the "spirit of the age" they belong to.
 
 ---
@@ -66,16 +66,17 @@ Organizations, governments, companies.
 ```rust
 pub struct Institution {
     pub name: String,
-    
+
     pub founded: Option<DateRange>,
     pub location_ref: Option<EntityRef>, // Head Office
     pub description: Option<RichContent>,
-    
+
     pub founders: Vec<EntityRef>,    // Links to Figures
     pub products: Vec<RichContent>,  // What they produce (Laws, Cars, Ideas)
-    
+
     pub relations: Vec<Relation>,
-    // ... timestamps
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -90,15 +91,18 @@ Moments in history.
 ```rust
 pub struct Event {
     pub name: String,
-    
+
     pub date_range: DateRange,
+    pub description: Option<RichContent>,
     pub location_ref: Option<EntityRef>,
-    
+
     pub participants: Vec<EntityRef>, // Who was there
     pub causes: Vec<RichContent>,     // Why it happened
     pub consequences: Vec<RichContent>, // What happened after
     
-    // ... relations & timestamps
+    pub relations: Vec<Relation>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -113,13 +117,15 @@ Books, Art, Theories.
 ```rust
 pub struct Work {
     pub title: String, // Note: mapped to `name` in DB index
-    
+
     pub authors: Vec<EntityRef>,
     pub publication_date: Option<DateRange>,
     pub summary: Option<RichContent>,
     pub key_ideas: Vec<RichContent>,
     
-    // ... relations & timestamps
+    pub relations: Vec<Relation>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -134,11 +140,14 @@ Locations, Cities, Regions.
 ```rust
 pub struct Geo {
     pub name: String,
-    
+
     pub region: Option<RichContent>, // Broad container (e.g. "Insulinde")
+    pub description: Option<RichContent>,
     pub aliases: Vec<String>,        // e.g. "Martinase"
     
-    // ... relations & timestamps
+    pub relations: Vec<Relation>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```
 
@@ -154,8 +163,11 @@ Ideologies (Communism, Moralism, Ultraliberalism).
 pub struct SchoolOfThought {
     pub name: String,
     
+    pub description: Option<RichContent>,
+    pub relations: Vec<Relation>,
     pub sub_schools: Vec<String>, // e.g. "Mazovian Socio-Economics"
     
-    // ... relations & timestamps
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 ```

@@ -5,7 +5,7 @@
 
 This documentation covers the internal architecture, design decisions, and exhaustive implementation details of the Encyclopedia application.
 
-## 📚 Core Architecture
+## Core Architecture
 *How the system is designed at a high level.*
 
 - **[Architecture & Design](./architecture.md)**: IPC Bridge, CQRS Pattern, Module Organization.
@@ -13,7 +13,7 @@ This documentation covers the internal architecture, design decisions, and exhau
 - **[Domain Model](./domain_model.md)**: Exact definitions of all 6 Entity Types.
 - **[Rich Content Protocol](./protocol_rich_content.md)**: Specification for the text/link system.
 
-## 📖 Code Reference (The "Why" and "How")
+## Code Reference (The "Why" and "How")
 *File-by-file explanations of the implementation.*
 
 - **[Backend API Reference](./backend_api_reference.md)**:
@@ -26,6 +26,6 @@ This documentation covers the internal architecture, design decisions, and exhau
     - Details State management, Props, and Render logic.
     - Explains the Form Controller pattern.
 
-## 🛠 Workflows
+## Workflows
 - **[Frontend Architecture](./frontend.md)**: General patterns for React/Vite/Tailwind.
 - **[Roadmap](./roadmap.md)**: Upcoming features (Relation Manager).
