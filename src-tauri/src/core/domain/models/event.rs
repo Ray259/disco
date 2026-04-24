@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityRef;
-use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::relation::Relation;
+use crate::core::domain::values::rich_content::RichContent;
 
 /// A historical event with a date range.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,18 +24,31 @@ impl Event {
     pub fn new(name: String, date_range: DateRange) -> Self {
         let now = chrono::Utc::now();
         Self {
-            name, date_range, description: None, location_ref: None,
-            participants: Vec::new(), causes: Vec::new(), consequences: Vec::new(),
-            relations: Vec::new(), created_at: now, updated_at: now,
+            name,
+            date_range,
+            description: None,
+            location_ref: None,
+            participants: Vec::new(),
+            causes: Vec::new(),
+            consequences: Vec::new(),
+            relations: Vec::new(),
+            created_at: now,
+            updated_at: now,
         }
     }
 }
 
-use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::traits::DomainEntity;
+use crate::core::domain::values::entity_ref::EntityType;
 
 impl DomainEntity for Event {
-    fn entity_type(&self) -> EntityType { EntityType::Event }
-    fn name(&self) -> String { self.name.clone() }
-    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) { self.updated_at = date; }
+    fn entity_type(&self) -> EntityType {
+        EntityType::Event
+    }
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) {
+        self.updated_at = date;
+    }
 }

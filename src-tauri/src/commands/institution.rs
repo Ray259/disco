@@ -1,13 +1,13 @@
-use tauri::State;
+use super::common::{handle_create, handle_update, parse_flexible_date};
 use crate::core::db::EncyclopediaDb;
-use crate::core::vault::VaultManager;
 use crate::core::domain::models::institution::Institution;
+use crate::core::domain::traits::InputDto;
+use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::values::rich_content::RichContent;
-use crate::core::domain::values::date_range::DateRange;
-use crate::core::domain::traits::InputDto;
+use crate::core::vault::VaultManager;
 use serde::Deserialize;
-use super::common::{handle_create, handle_update, parse_flexible_date};
+use tauri::State;
 
 #[derive(Deserialize)]
 pub struct CreateInstitutionRequest {
@@ -28,7 +28,11 @@ impl InputDto<Institution> for CreateInstitutionRequest {
                 });
             }
         }
-        if let Some(d) = &self.description { if !d.is_empty() { inst.description = Some(d.clone()); } }
+        if let Some(d) = &self.description {
+            if !d.is_empty() {
+                inst.description = Some(d.clone());
+            }
+        }
         Ok(inst)
     }
 
@@ -48,25 +52,50 @@ impl InputDto<Institution> for CreateInstitutionRequest {
 }
 
 #[tauri::command]
-pub async fn get_all_institutions(state: State<'_, EncyclopediaDb>) -> Result<Vec<Institution>, String> {
-    let rows = state.list_entities(Some(EntityType::Institution)).await.map_err(|e| e.to_string())?;
-    rows.into_iter().map(|(_name, data)| serde_json::from_str(&data).map_err(|e| e.to_string())).collect()
+pub async fn get_all_institutions(
+    state: State<'_, EncyclopediaDb>,
+) -> Result<Vec<Institution>, String> {
+    let rows = state
+        .list_entities(Some(EntityType::Institution))
+        .await
+        .map_err(|e| e.to_string())?;
+    rows.into_iter()
+        .map(|(_name, data)| serde_json::from_str(&data).map_err(|e| e.to_string()))
+        .collect()
 }
 
 #[tauri::command]
-pub async fn get_institution(state: State<'_, EncyclopediaDb>, name: String) -> Result<Option<Institution>, String> {
-    match state.get_entity(EntityType::Institution, &name).await.map_err(|e| e.to_string())? {
-        Some(data) => serde_json::from_str(&data).map(Some).map_err(|e| e.to_string()),
+pub async fn get_institution(
+    state: State<'_, EncyclopediaDb>,
+    name: String,
+) -> Result<Option<Institution>, String> {
+    match state
+        .get_entity(EntityType::Institution, &name)
+        .await
+        .map_err(|e| e.to_string())?
+    {
+        Some(data) => serde_json::from_str(&data)
+            .map(Some)
+            .map_err(|e| e.to_string()),
         None => Ok(None),
     }
 }
 
 #[tauri::command]
-pub async fn create_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, request: CreateInstitutionRequest) -> Result<String, String> {
+pub async fn create_institution(
+    state: State<'_, EncyclopediaDb>,
+    vault: State<'_, VaultManager>,
+    request: CreateInstitutionRequest,
+) -> Result<String, String> {
     handle_create(state, vault, request).await
 }
 
 #[tauri::command]
-pub async fn update_institution(state: State<'_, EncyclopediaDb>, vault: State<'_, VaultManager>, name: String, request: CreateInstitutionRequest) -> Result<String, String> {
+pub async fn update_institution(
+    state: State<'_, EncyclopediaDb>,
+    vault: State<'_, VaultManager>,
+    name: String,
+    request: CreateInstitutionRequest,
+) -> Result<String, String> {
     handle_update(state, vault, EntityType::Institution, name, request).await
 }

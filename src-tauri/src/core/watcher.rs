@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher, EventKind};
+use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use tokio::sync::mpsc;
 
 use crate::core::db::EncyclopediaDb;
@@ -18,10 +18,10 @@ pub fn start_watcher(
     db: Arc<EncyclopediaDb>,
 ) -> Result<WatcherHandle, String> {
     let vault_path = vault.vault_path.clone();
-    
+
     // Channel for debounced events
     let (tx, mut rx) = mpsc::channel::<PathBuf>(100);
-    
+
     // Create the notify watcher
     let tx_clone = tx.clone();
     let mut watcher = RecommendedWatcher::new(
@@ -30,7 +30,11 @@ pub fn start_watcher(
                 for path in event.paths {
                     if path.extension().map_or(false, |ext| ext == "md") {
                         // Skip hidden paths
-                        if path.components().any(|c| c.as_os_str().to_str().map_or(false, |s| s.starts_with('.') && s != "." && s != "..")) {
+                        if path.components().any(|c| {
+                            c.as_os_str()
+                                .to_str()
+                                .map_or(false, |s| s.starts_with('.') && s != "." && s != "..")
+                        }) {
                             continue;
                         }
                         match event.kind {
@@ -44,24 +48,24 @@ pub fn start_watcher(
             }
         },
         Config::default().with_poll_interval(Duration::from_millis(500)),
-    ).map_err(|e| {
+    )
+    .map_err(|e| {
         tracing::error!("Failed to create file watcher: {}", e);
         format!("Failed to create file watcher: {}", e)
     })?;
-    
+
     if let Some(path) = &vault_path {
         tracing::info!(path = %path.display(), "Starting file watcher on vault");
-        watcher.watch(path, RecursiveMode::Recursive)
-            .map_err(|e| {
-                tracing::error!(path = %path.display(), "Failed to watch vault: {}", e);
-                format!("Failed to watch vault directory: {}", e)
-            })?;
+        watcher.watch(path, RecursiveMode::Recursive).map_err(|e| {
+            tracing::error!(path = %path.display(), "Failed to watch vault: {}", e);
+            format!("Failed to watch vault directory: {}", e)
+        })?;
     }
-    
+
     // Spawn async task to process file events with debouncing
     let vault_for_task = vault.clone();
     let db_for_task = db.clone();
-    
+
     tokio::spawn(async move {
         // Simple debounce: collect events over 300ms windows
         loop {
@@ -69,7 +73,7 @@ pub fn start_watcher(
                 Some(path) => {
                     // Wait a bit for additional events (debounce)
                     tokio::time::sleep(Duration::from_millis(300)).await;
-                    
+
                     // Drain any queued events for this path
                     let mut paths_to_process = vec![path];
                     while let Ok(extra_path) = rx.try_recv() {
@@ -77,7 +81,7 @@ pub fn start_watcher(
                             paths_to_process.push(extra_path);
                         }
                     }
-                    
+
                     // Process each unique path
                     for p in paths_to_process {
                         if p.exists() {

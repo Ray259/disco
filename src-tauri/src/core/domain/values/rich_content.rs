@@ -11,8 +11,12 @@ pub enum ContentSegment {
 }
 
 impl ContentSegment {
-    pub fn text(s: impl Into<String>) -> Self { ContentSegment::Text(s.into()) }
-    pub fn entity_ref(r: EntityRef) -> Self { ContentSegment::EntityRef(r) }
+    pub fn text(s: impl Into<String>) -> Self {
+        ContentSegment::Text(s.into())
+    }
+    pub fn entity_ref(r: EntityRef) -> Self {
+        ContentSegment::EntityRef(r)
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -21,10 +25,16 @@ pub struct RichContent {
 }
 
 impl RichContent {
-    pub fn new() -> Self { Self { segments: Vec::new() } }
+    pub fn new() -> Self {
+        Self {
+            segments: Vec::new(),
+        }
+    }
 
     pub fn from_text(text: impl Into<String>) -> Self {
-        Self { segments: vec![ContentSegment::Text(text.into())] }
+        Self {
+            segments: vec![ContentSegment::Text(text.into())],
+        }
     }
 
     pub fn push_text(mut self, text: impl Into<String>) -> Self {
@@ -42,25 +52,40 @@ impl RichContent {
         self
     }
 
-    pub fn is_empty(&self) -> bool { self.segments.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.segments.is_empty()
+    }
 
     pub fn to_plain_text(&self) -> String {
-        self.segments.iter().map(|seg| match seg {
-            ContentSegment::Text(t) => t.clone(),
-            ContentSegment::EntityRef(r) => r.display_text.clone(),
-            ContentSegment::DateRef(d) => format!("{} - {}", d.start, d.end),
-        }).collect::<Vec<_>>().join("")
+        self.segments
+            .iter()
+            .map(|seg| match seg {
+                ContentSegment::Text(t) => t.clone(),
+                ContentSegment::EntityRef(r) => r.display_text.clone(),
+                ContentSegment::DateRef(d) => format!("{} - {}", d.start, d.end),
+            })
+            .collect::<Vec<_>>()
+            .join("")
     }
 
     /// Serialize to markdown with Obsidian `[[Type/Name|Name]]` wiki-links.
     pub fn to_markdown(&self) -> String {
-        self.segments.iter().map(|seg| match seg {
-            ContentSegment::Text(t) => t.clone(),
-            ContentSegment::EntityRef(r) => {
-                format!("[[{}/{}|{}]]", r.entity_type.dir_name(), r.display_text, r.display_text)
-            }
-            ContentSegment::DateRef(d) => format!("{} - {}", d.start, d.end),
-        }).collect::<Vec<_>>().join("")
+        self.segments
+            .iter()
+            .map(|seg| match seg {
+                ContentSegment::Text(t) => t.clone(),
+                ContentSegment::EntityRef(r) => {
+                    format!(
+                        "[[{}/{}|{}]]",
+                        r.entity_type.dir_name(),
+                        r.display_text,
+                        r.display_text
+                    )
+                }
+                ContentSegment::DateRef(d) => format!("{} - {}", d.start, d.end),
+            })
+            .collect::<Vec<_>>()
+            .join("")
     }
 
     /// Parse markdown with `[[Type/Name|Display]]` wiki-links back into RichContent.
@@ -84,7 +109,8 @@ impl RichContent {
                             let type_str = &path[..slash];
                             if let Some(entity_type) = EntityType::from_str(type_str) {
                                 segments.push(ContentSegment::EntityRef(EntityRef::new(
-                                    entity_type, display.to_string(),
+                                    entity_type,
+                                    display.to_string(),
                                 )));
                                 rest = &after[end + 2..];
                                 continue;
@@ -120,17 +146,24 @@ impl RichContent {
     }
 
     pub fn entity_refs(&self) -> Vec<&EntityRef> {
-        self.segments.iter().filter_map(|seg| match seg {
-            ContentSegment::EntityRef(r) => Some(r),
-            _ => None,
-        }).collect()
+        self.segments
+            .iter()
+            .filter_map(|seg| match seg {
+                ContentSegment::EntityRef(r) => Some(r),
+                _ => None,
+            })
+            .collect()
     }
 }
 
 impl From<String> for RichContent {
-    fn from(s: String) -> Self { RichContent::from_text(s) }
+    fn from(s: String) -> Self {
+        RichContent::from_text(s)
+    }
 }
 
 impl From<&str> for RichContent {
-    fn from(s: &str) -> Self { RichContent::from_text(s) }
+    fn from(s: &str) -> Self {
+        RichContent::from_text(s)
+    }
 }

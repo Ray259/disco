@@ -3,9 +3,9 @@ use std::collections::HashMap;
 
 use crate::core::domain::values::date_range::DateRange;
 use crate::core::domain::values::entity_ref::EntityRef;
+use crate::core::domain::values::relation::Relation;
 use crate::core::domain::values::rich_content::RichContent;
 use crate::core::domain::values::zeitgeist::Zeitgeist;
-use crate::core::domain::values::relation::Relation;
 
 /// A major contribution made by a figure.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,33 +46,58 @@ pub struct Figure {
 }
 
 impl Figure {
-    pub fn new(name: String, life: DateRange, primary_role: RichContent, primary_location: RichContent) -> Self {
+    pub fn new(
+        name: String,
+        life: DateRange,
+        primary_role: RichContent,
+        primary_location: RichContent,
+    ) -> Self {
         let now = chrono::Utc::now();
         Self {
-            name, life, primary_role, primary_location,
-            defining_quote: None, zeitgeist: None, axiom: None,
-            key_terminology: HashMap::new(), argument_flow: None,
-            primary_institution: None, funding_model: None,
-            institutional_product: None, succession_plan: None,
+            name,
+            life,
+            primary_role,
+            primary_location,
+            defining_quote: None,
+            zeitgeist: None,
+            axiom: None,
+            key_terminology: HashMap::new(),
+            argument_flow: None,
+            primary_institution: None,
+            funding_model: None,
+            institutional_product: None,
+            succession_plan: None,
             major_contributions: Vec::new(),
-            predecessors: Vec::new(), contemporary_rivals: Vec::new(), successors: Vec::new(),
-            short_term_success: None, modern_relevance: None,
-            critical_flaw: None, personal_synthesis: None,
+            predecessors: Vec::new(),
+            contemporary_rivals: Vec::new(),
+            successors: Vec::new(),
+            short_term_success: None,
+            modern_relevance: None,
+            critical_flaw: None,
+            personal_synthesis: None,
             relations: Vec::new(),
-            created_at: now, updated_at: now,
+            created_at: now,
+            updated_at: now,
         }
     }
 
     pub fn with_defining_quote(mut self, quote: RichContent) -> Self {
-        self.defining_quote = Some(quote); self
+        self.defining_quote = Some(quote);
+        self
     }
 }
 
-use crate::core::domain::values::entity_ref::EntityType;
 use crate::core::domain::traits::DomainEntity;
+use crate::core::domain::values::entity_ref::EntityType;
 
 impl DomainEntity for Figure {
-    fn entity_type(&self) -> EntityType { EntityType::Figure }
-    fn name(&self) -> String { self.name.clone() }
-    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) { self.updated_at = date; }
+    fn entity_type(&self) -> EntityType {
+        EntityType::Figure
+    }
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+    fn set_updated_at(&mut self, date: chrono::DateTime<chrono::Utc>) {
+        self.updated_at = date;
+    }
 }

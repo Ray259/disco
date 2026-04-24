@@ -1,9 +1,9 @@
-pub mod figure;
-pub mod institution;
+pub mod common;
 pub mod event;
+pub mod figure;
 pub mod geo;
-pub mod work;
+pub mod institution;
 pub mod school;
 pub mod search;
-pub mod common;
 pub mod terminal;
+pub mod work;

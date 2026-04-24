@@ -32,7 +32,9 @@ impl EntityType {
             "Event" | "Events" => Some(EntityType::Event),
             "Geo" | "Geos" => Some(EntityType::Geo),
             "Institution" | "Institutions" => Some(EntityType::Institution),
-            "SchoolOfThought" | "SchoolsOfThought" | "School of Thought" => Some(EntityType::SchoolOfThought),
+            "SchoolOfThought" | "SchoolsOfThought" | "School of Thought" => {
+                Some(EntityType::SchoolOfThought)
+            }
             _ => None,
         }
     }
@@ -59,13 +61,28 @@ pub struct EntityRef {
 
 impl EntityRef {
     pub fn new(entity_type: EntityType, display_text: String) -> Self {
-        Self { entity_type, display_text }
+        Self {
+            entity_type,
+            display_text,
+        }
     }
 
-    pub fn figure(name: String) -> Self { Self::new(EntityType::Figure, name) }
-    pub fn work(name: String) -> Self { Self::new(EntityType::Work, name) }
-    pub fn event(name: String) -> Self { Self::new(EntityType::Event, name) }
-    pub fn geo(name: String) -> Self { Self::new(EntityType::Geo, name) }
-    pub fn institution(name: String) -> Self { Self::new(EntityType::Institution, name) }
-    pub fn school(name: String) -> Self { Self::new(EntityType::SchoolOfThought, name) }
+    pub fn figure(name: String) -> Self {
+        Self::new(EntityType::Figure, name)
+    }
+    pub fn work(name: String) -> Self {
+        Self::new(EntityType::Work, name)
+    }
+    pub fn event(name: String) -> Self {
+        Self::new(EntityType::Event, name)
+    }
+    pub fn geo(name: String) -> Self {
+        Self::new(EntityType::Geo, name)
+    }
+    pub fn institution(name: String) -> Self {
+        Self::new(EntityType::Institution, name)
+    }
+    pub fn school(name: String) -> Self {
+        Self::new(EntityType::SchoolOfThought, name)
+    }
 }
