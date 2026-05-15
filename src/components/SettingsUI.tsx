@@ -76,6 +76,7 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
       <div className="flex bg-[var(--c-panel)]/95 border-2 border-[#111] shadow-2xl relative max-w-2xl w-full">
         
         <button 
+           aria-label="Close settings"
            onClick={onClose}
            className="absolute top-4 right-4 text-[var(--c-muted)] hover:text-white transition-colors z-50 p-1"
         >
@@ -107,6 +108,7 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
                       <td className="w-[55%] text-left py-3 pl-4 flex items-center text-[#dedede]">
                         <span className="mr-2 text-xl font-sans text-[var(--c-muted)] leading-none">(</span>
                         <input 
+                            aria-label="Music volume"
                             type="range" 
                             min="0" max="1" step="0.01" 
                             value={volume}
@@ -121,6 +123,8 @@ export const SettingsUI: React.FC<SettingsUIProps> = ({
                       <td className="w-[45%] text-right py-3 pr-4 uppercase text-[#dedede]">Mute All Audio</td>
                       <td className="w-[55%] text-left py-3 pl-4 flex items-center text-[#dedede]">
                          <button 
+                            aria-label="Toggle mute"
+                            aria-pressed={isMuted}
                             onClick={onMuteToggle}
                             className="w-5 h-5 flex items-center justify-center bg-white hover:bg-white/80 transition-colors"
                          >
