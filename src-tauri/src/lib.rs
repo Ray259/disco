@@ -143,17 +143,27 @@ async fn set_vault_path(
     let app_data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
     let new_vault = VaultManager::new(app_data_dir, Some(path_buf.clone()))?;
 
-    let vault_files: Vec<_> = std::fs::read_dir(&path_buf)
-        .map(|entries| entries.filter_map(|e| e.ok()).collect())
-        .unwrap_or_default();
-    let new_vault_has_md_files = vault_files.iter().any(|entry: &std::fs::DirEntry| {
-        entry.path().is_dir() && {
-            std::fs::read_dir(entry.path())
-                .map(|e| e.filter_map(|e| e.ok())
-                    .any(|f| f.path().extension().map_or(false, |ext| ext == "md")))
-                .unwrap_or(false)
+    let mut new_vault_has_md_files = false;
+    if let Ok(mut entries) = tokio::fs::read_dir(&path_buf).await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let p = entry.path();
+            if let Ok(file_type) = entry.file_type().await {
+                if file_type.is_dir() {
+                    if let Ok(mut sub_entries) = tokio::fs::read_dir(&p).await {
+                        while let Ok(Some(sub_entry)) = sub_entries.next_entry().await {
+                            if sub_entry.path().extension().map_or(false, |ext| ext == "md") {
+                                new_vault_has_md_files = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if new_vault_has_md_files {
+                break;
+            }
         }
-    });
+    }
 
     if !new_vault_has_md_files {
         match new_vault.export_all_from_db(&db).await {
